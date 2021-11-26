@@ -1,0 +1,14 @@
+build/
+dist/
+indoor_test/
+ISLM_footprintViewer/
+oldversion/
+.vscode/
+__pycache__/
+*.bmp
+*.tmp 
+*.jpg
+*.log
+*.png 
+.ico.spec
+abaqus.*
