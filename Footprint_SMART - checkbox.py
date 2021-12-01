@@ -9,13 +9,11 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSlot, Qt
 
 from os.path import isfile 
 from os import getcwd, remove, system, listdir
 import numpy as np 
 import paramiko as FTP 
-import socket, time 
 
 from basicfunctions import  findout_offset, rotatePoints, combinationWords
 from smart import ResultSfric, SFRIC, lateralShift_fromSFRIC, readSMART_Inp
@@ -24,83 +22,6 @@ from postprocess import readDAT,  interpolation_footprint_pressure, \
     contPress, FPC, SearchPoints, FOOTPRINT, calculatingActualArea, extract_profile_crown
 from canvas_plotting import myCanvas 
 from files import makingFullFilePath_linux, simulationCodes
-
-colors = ['black', 'blue', 'red', 'green', 'chocolate', 'cyan', 'magenta', 'yellow', 
-        'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 
-        'azure', 'beige', 'bisque', 'black', 'blanchedalmond',
-         'blueviolet', 'brown', 'burlywood', 'cadetblue',
-          'chartreuse', 'coral', 'cornflowerblue', 'cornsilk', 
-          'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 
-          'darkgreen', 'darkgrey', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 
-          'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 
-          'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 
-          'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 
-          'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia',
-           'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'green', 
-           'greenyellow', 'grey', 'honeydew', 'hotpink', 'indianred', 'indigo', 
-           'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 
-           'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray',
-            'lightgreen', 'lightgrey', 'lightpink', 'lightsalmon', 'lightseagreen', 
-            'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 
-            'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon',
-             'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 
-             'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 
-             'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin',
-              'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered',
-               'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred',
-                'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 
-                'rebeccapurple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon',
-                 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 
-                 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 
-                 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow', 'yellowgreen']
-linestyles = ['-', '--', '-.', ':', '']
-mark = ['o', "s", "v", "^", ">", "<", '+', '*', 'D', "1", "2", '3', '4' ]
-
-class MyQTableWidgetItemCheckBox(QtWidgets.QTableWidgetItem):
-    """
-    checkbox widget 과 같은 cell 에  item 으로 들어감.
-    checkbox 값 변화에 따라, 사용자정의 data를 기준으로 정렬 기능 구현함.
-    """
-    def __init__(self):
-        super().__init__()
-        # self.setData(Qt.UserRole, 0)
-
-    def __lt__(self, other):
-        # print(type(self.data(Qt.UserRole)))
-        return self.data(Qt.UserRole) < other.data(Qt.UserRole)
-
-    def my_setdata(self, value):
-        # print("my setdata ", value)
-        self.setData(Qt.UserRole, value)
-        # print("row ", self.row())
-
-class MyCheckBox(QtWidgets.QCheckBox):
-    def __init__(self, item):
-        """
-        :param item: QTableWidgetItem instance
-        """
-        super().__init__()
-        self.item = item
-        self.mycheckvalue = 0   # 0 --> unchecked, 2 --> checked
-        self.stateChanged.connect(self.__checkbox_change)
-
-    def __checkbox_change(self, checkvalue):
-        # print("myclass...check change... ", checkvalue)
-        self.mycheckvalue = checkvalue
-        
-        # print("checkbox row= ", self.get_row())
-        try : 
-            N = self.item.row()
-        except: 
-            N = 0 
-        return N 
-
-    def get_row(self):
-        try : 
-            N = self.item.row()
-        except: 
-            N = 0 
-        return N 
 
 
 
@@ -428,14 +349,120 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.checkBox_showBndPressure)
         self.horizontalLayout_boundarybox.addLayout(self.verticalLayout)
         self.verticalLayout_menu.addLayout(self.horizontalLayout_boundarybox)
-        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
-        self.tableWidget.setMinimumSize(QtCore.QSize(330, 0))
-        self.tableWidget.setMaximumSize(QtCore.QSize(330, 16777215))
-        self.tableWidget.setObjectName("tableWidget")
-        # self.tableWidget.setColumnCount(2)
-        # self.tableWidget.setRowCount(0)
-        self.setTable()
-        self.verticalLayout_menu.addWidget(self.tableWidget)
+        self.groupBox_2 = QtWidgets.QGroupBox(self.centralwidget)
+        self.groupBox_2.setMinimumSize(QtCore.QSize(0, 70))
+        self.groupBox_2.setMaximumSize(QtCore.QSize(330, 70))
+        self.groupBox_2.setTitle("")
+        self.groupBox_2.setObjectName("groupBox_2")
+        self.layoutWidget1 = QtWidgets.QWidget(self.groupBox_2)
+        self.layoutWidget1.setGeometry(QtCore.QRect(0, 3, 332, 19))
+        self.layoutWidget1.setObjectName("layoutWidget1")
+        self.horizontalLayout_SelectImage_2 = QtWidgets.QHBoxLayout(self.layoutWidget1)
+        self.horizontalLayout_SelectImage_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_SelectImage_2.setObjectName("horizontalLayout_SelectImage_2")
+        self.checkBox = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox.setObjectName("checkBox")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox)
+        self.checkBox_2 = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox_2.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_2.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_2.setObjectName("checkBox_2")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox_2)
+        self.checkBox_3 = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox_3.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_3.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_3.setObjectName("checkBox_3")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox_3)
+        self.checkBox_4 = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox_4.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_4.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_4.setObjectName("checkBox_4")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox_4)
+        self.checkBox_5 = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox_5.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_5.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_5.setObjectName("checkBox_5")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox_5)
+        self.checkBox_19 = QtWidgets.QCheckBox(self.layoutWidget1)
+        self.checkBox_19.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_19.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_19.setObjectName("checkBox_19")
+        self.horizontalLayout_SelectImage_2.addWidget(self.checkBox_19)
+        self.layoutWidget_2 = QtWidgets.QWidget(self.groupBox_2)
+        self.layoutWidget_2.setGeometry(QtCore.QRect(0, 25, 332, 19))
+        self.layoutWidget_2.setObjectName("layoutWidget_2")
+        self.horizontalLayout_SelectImage_3 = QtWidgets.QHBoxLayout(self.layoutWidget_2)
+        self.horizontalLayout_SelectImage_3.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_SelectImage_3.setObjectName("horizontalLayout_SelectImage_3")
+        self.checkBox_7 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_7.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_7.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_7.setObjectName("checkBox_7")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_7)
+        self.checkBox_8 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_8.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_8.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_8.setObjectName("checkBox_8")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_8)
+        self.checkBox_9 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_9.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_9.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_9.setObjectName("checkBox_9")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_9)
+        self.checkBox_10 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_10.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_10.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_10.setObjectName("checkBox_10")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_10)
+        self.checkBox_11 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_11.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_11.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_11.setObjectName("checkBox_11")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_11)
+        self.checkBox_12 = QtWidgets.QCheckBox(self.layoutWidget_2)
+        self.checkBox_12.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_12.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_12.setObjectName("checkBox_12")
+        self.horizontalLayout_SelectImage_3.addWidget(self.checkBox_12)
+        self.layoutWidget_3 = QtWidgets.QWidget(self.groupBox_2)
+        self.layoutWidget_3.setGeometry(QtCore.QRect(0, 45, 332, 19))
+        self.layoutWidget_3.setObjectName("layoutWidget_3")
+        self.horizontalLayout_SelectImage_4 = QtWidgets.QHBoxLayout(self.layoutWidget_3)
+        self.horizontalLayout_SelectImage_4.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_SelectImage_4.setObjectName("horizontalLayout_SelectImage_4")
+        self.checkBox_13 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_13.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_13.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_13.setObjectName("checkBox_13")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_13)
+        self.checkBox_14 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_14.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_14.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_14.setObjectName("checkBox_14")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_14)
+        self.checkBox_15 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_15.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_15.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_15.setObjectName("checkBox_15")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_15)
+        self.checkBox_16 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_16.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_16.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_16.setObjectName("checkBox_16")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_16)
+        self.checkBox_17 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_17.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_17.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_17.setObjectName("checkBox_17")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_17)
+        self.checkBox_18 = QtWidgets.QCheckBox(self.layoutWidget_3)
+        self.checkBox_18.setMinimumSize(QtCore.QSize(50, 0))
+        self.checkBox_18.setMaximumSize(QtCore.QSize(50, 16777215))
+        self.checkBox_18.setObjectName("checkBox_18")
+        self.horizontalLayout_SelectImage_4.addWidget(self.checkBox_18)
+        self.verticalLayout_menu.addWidget(self.groupBox_2)
         self.horizontalLayout_redobox = QtWidgets.QHBoxLayout()
         self.horizontalLayout_redobox.setObjectName("horizontalLayout_redobox")
         self.pushButton_Redraw = QtWidgets.QPushButton(self.centralwidget)
@@ -602,6 +629,7 @@ class Ui_MainWindow(object):
         self.pushPointSize.clicked.connect(self.lineEdit_pointSize.copy)
         self.pushButton_Range.clicked.connect(self.lineEdit_max_colorRange.copy)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.checkBox_5, self.pushButton_Redraw)
         MainWindow.setTabOrder(self.pushButton_Redraw, self.pushButton_Range)
         MainWindow.setTabOrder(self.pushButton_Range, self.radio_PC)
         MainWindow.setTabOrder(self.radio_PC, self.radioLT)
@@ -639,6 +667,11 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.radioButton_print3, self.radioButton_print4)
         MainWindow.setTabOrder(self.radioButton_print4, self.radioButton_print5)
         MainWindow.setTabOrder(self.radioButton_print5, self.radioButton_print6)
+        MainWindow.setTabOrder(self.radioButton_print6, self.checkBox)
+        MainWindow.setTabOrder(self.checkBox, self.checkBox_2)
+        MainWindow.setTabOrder(self.checkBox_2, self.checkBox_3)
+        MainWindow.setTabOrder(self.checkBox_3, self.checkBox_4)
+        MainWindow.setTabOrder(self.checkBox_4, self.checkBox_19)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -693,6 +726,24 @@ class Ui_MainWindow(object):
         self.pushButton_compare.setText(_translate("MainWindow", "Footprint Boundaries"))
         self.checkBox_showGrv.setText(_translate("MainWindow", "Groove"))
         self.checkBox_showBndPressure.setText(_translate("MainWindow", "Pressure"))
+        self.checkBox.setText(_translate("MainWindow", "FP1"))
+        self.checkBox_2.setText(_translate("MainWindow", "FP2"))
+        self.checkBox_3.setText(_translate("MainWindow", "FP3"))
+        self.checkBox_4.setText(_translate("MainWindow", "FP4"))
+        self.checkBox_5.setText(_translate("MainWindow", "FP5"))
+        self.checkBox_19.setText(_translate("MainWindow", "FP6"))
+        self.checkBox_7.setText(_translate("MainWindow", "FP7"))
+        self.checkBox_8.setText(_translate("MainWindow", "FP8"))
+        self.checkBox_9.setText(_translate("MainWindow", "FP9"))
+        self.checkBox_10.setText(_translate("MainWindow", "FP10"))
+        self.checkBox_11.setText(_translate("MainWindow", "FP11"))
+        self.checkBox_12.setText(_translate("MainWindow", "FP12"))
+        self.checkBox_13.setText(_translate("MainWindow", "FP13"))
+        self.checkBox_14.setText(_translate("MainWindow", "FP14"))
+        self.checkBox_15.setText(_translate("MainWindow", "FP15"))
+        self.checkBox_16.setText(_translate("MainWindow", "FP16"))
+        self.checkBox_17.setText(_translate("MainWindow", "FP17"))
+        self.checkBox_18.setText(_translate("MainWindow", "FP18"))
         self.pushButton_Redraw.setText(_translate("MainWindow", "Refresh Image"))
         self.pushButton_Range.setText(_translate("MainWindow", "Refresh FPC"))
         self.pushButton_refreshAll.setText(_translate("MainWindow", "Refresh ISLM FPC"))
@@ -718,70 +769,26 @@ class Ui_MainWindow(object):
         self.lineEdit_fittingOrder.setText(_translate("MainWindow", "6"))
         self.check_showFittingPoints.setText(_translate("MainWindow", "PTS"))
         self.menuFILE.setTitle(_translate("MainWindow", "FILE"))
-        self.actionClose.setText(_translate("MainWindow", "Quit"))
-        self.actionClose.setShortcut(_translate("MainWindow", "Ctrl+Q"))
-        self.actionClear.setText(_translate("MainWindow", "Clear all data"))
+        self.actionClose.setText(_translate("MainWindow", "Close"))
+        self.actionClose.setShortcut(_translate("MainWindow", "Ctrl+C"))
+        self.actionClear.setText(_translate("MainWindow", "Clear"))
         self.actionClear.setToolTip(_translate("MainWindow", "Clear all data"))
-        self.actionClear.setShortcut(_translate("MainWindow", "Ctrl+R"))
+        self.actionClear.setShortcut(_translate("MainWindow", "Ctrl+Q"))
 
     def initialze(self): 
-        for i in range(self.rows): 
-            self.tableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(self.lineEdit_pointSize.text()))
-
         self.actions()
         self.initial_variables()
         self.Starting()
         self.jobStatus()
         self.start_log()
 
-        self.lineEdit_jobFile.setText("")
+        # self._stdout = StdoutRedirect()
+        # self._stdout.start()
+        # self._stdout.printOccur.connect(lambda x : self._append_text(x))
 
-        self._stdout = StdoutRedirect()
-        self._stdout.start()
-        self._stdout.printOccur.connect(lambda x : self._append_text(x))
-
-        self._stdoutText = StdoutRedirectText()
-        self._stdoutText.start()
-        self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
-
-    def setTable(self): 
-        self.columns= 5
-        self.rows = 18
-        self.tableWidget = QtWidgets.QTableWidget(self.rows, self.columns) # row, column
-        self.boxchecked=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1]
-        self.tableWidget.setMaximumSize(QtCore.QSize(330, 16777215))
-        self.tableWidget.setHorizontalHeaderLabels(["No.", "Footshape Name", "Color", 'Mark', "Size"])
-        self.tableWidget.setColumnWidth(0, 1) 
-        self.tableWidget.setColumnWidth(1, 160) 
-        self.tableWidget.setColumnWidth(2, 55) 
-        self.tableWidget.setColumnWidth(3, 10) 
-        self.tableWidget.setColumnWidth(4, 5) 
-        height = 7
-        for i in range(self.rows): 
-            self.tableWidget.setRowHeight(i, height) 
-
-        self.nData = self.rows 
-        item = MyQTableWidgetItemCheckBox()
-        self.chbox = []
-        self.combo_color=[]
-        self.combo_mark=[]
-        for i in range(self.rows): 
-            if i ==0: self.tableWidget.setItem(i, 0, item)
-            self.chbox.append( MyCheckBox(item) )
-            self.tableWidget.setCellWidget(i, 0, self.chbox[i])
-
-            self.combo_color.append(QtWidgets.QComboBox())
-            self.combo_color[i].addItems(colors)
-            self.combo_color[i].setCurrentIndex(i)
-            self.tableWidget.setCellWidget(i, 2, self.combo_color[i])
-
-            self.combo_mark.append(QtWidgets.QComboBox())
-            self.combo_mark[i].addItems(mark)
-            self.combo_mark[i].setCurrentIndex(0)
-            self.tableWidget.setCellWidget(i, 3, self.combo_mark[i])
-
-            self.chbox[i].stateChanged.connect(self.addComparingBoundary_check)
-
+        # self._stdoutText = StdoutRedirectText()
+        # self._stdoutText.start()
+        # self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
 
     def start_log(self): 
         self.log='footprint.log'
@@ -923,6 +930,24 @@ class Ui_MainWindow(object):
         self.actionClear.triggered.connect(self.windowClear)
 
         self.pushButton_compare.clicked.connect(self.addComparingBoundary)
+        self.checkBox.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_2.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_3.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_4.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_5.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_19.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_7.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_8.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_9.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_10.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_11.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_12.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_13.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_14.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_15.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_16.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_17.stateChanged.connect(self.addComparingBoundary_check)
+        self.checkBox_18.stateChanged.connect(self.addComparingBoundary_check)
         self.checkBox_showGrv.stateChanged.connect(self.addComparingBoundary_check)
         self.checkBox_showBndPressure.stateChanged.connect(self.addComparingBoundary_check)
 
@@ -999,7 +1024,7 @@ class Ui_MainWindow(object):
       
     def checkAllboundaries(self, check): 
         for i in range(self.fn): 
-            self.chbox[i].setChecked(check)
+            self.checkboxes[i].setChecked(check)
     
     def windowClear(self): 
         self.Starting()
@@ -1019,8 +1044,7 @@ class Ui_MainWindow(object):
         
         self.fn = -1 
         for i in range(self.FN): 
-            self.chbox[i].setChecked(False)
-            self.tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(""))
+            self.checkboxes[i].setChecked(False)
 
         self.radioButton_print1.setChecked(True)
         self.figure.clearWindow()
@@ -1050,8 +1074,6 @@ class Ui_MainWindow(object):
 
         self.filename.setText("Initialized")
         print ("## Initialized #############################")
-
-        self.lineEdit_jobFile.setText("")
         
     def initial_variables(self):
          
@@ -1122,12 +1144,6 @@ class Ui_MainWindow(object):
         self.verticalLayout_image.addWidget(self.toolbar)
         self.verticalLayout_image.addWidget(self.canvas)
 
-        self.default_user = False 
-
-        self.lineEdit_jobFile.setPlaceholderText("Ctrl+R : Erase all the footprints, Ctrl+Q : Exit program")
-        self.lineEdit_jobFile.setFocus()
-
-
     def currentFootprintNumber(self): 
         if self.radioButton_print1.isChecked(): fn = 0 
         elif self.radioButton_print2.isChecked(): fn = 1 
@@ -1159,17 +1175,9 @@ class Ui_MainWindow(object):
             else: 
                 port =22
 
-            # if len(user) != 9 : 
-            #     self.filename.setText("Input correct user ID.")
-            #     return 
-            if "ISLM" in user.upper(): 
-                host = '10.82.66.65'
-                user = 'h20200155'
-                pw = user 
-                self.lineEdit_hpc_ID.setText("ISLM_USER")
-                self.lineEdit_address.setText("10.82.66.65")
-
-
+            if len(user) != 9 : 
+                self.filename.setText("Input correct user ID.")
+                return 
             cnt = 0 
             for h in host: 
                 if '.' == h: cnt += 1
@@ -1177,16 +1185,12 @@ class Ui_MainWindow(object):
                 self.filename.setText("Input correct Address")
                 return 
             
-            if "ISLM_USER" in  self.lineEdit_hpc_ID.text().upper(): 
-                print ("Connecting to %s, port=%d, ID=%s"%(host, port, "ISLM_USER"), end= ", ")
-            else: 
-                print ("Connecting to %s, port=%d, ID=%s"%(host, port, user), end= ", ")
+            print ("Connecting to %s, port=%d, ID=%s"%(host, port, user), end= ", ")
             self.host = host; self.user=user; self.pw = pw 
             self.ftp = FTP.SSHClient()
             self.ftp.set_missing_host_key_policy(FTP.AutoAddPolicy())
             try:
                 self.ftp.connect(host, username=user, password=pw, port=port, timeout=3)
-                self.default_user = False 
                 self.group_SimulationType.setEnabled(True)
                 self.push_connection.setText("Disconnect")
                 self.check_FTP.setChecked(True)
@@ -1196,37 +1200,13 @@ class Ui_MainWindow(object):
                 self.filename.setText(" Opening sftp.")
                 self.sftp = self.ftp.open_sftp()
                 self.filename.setText("Connected!!")
-                self.radio_Manual.setDisabled(False)
 
-            except: 
-                host = '10.82.66.65'
-                user = 'h20200155'
-                pw = user 
-                self.lineEdit_hpc_ID.setText("ISLM_USER")
-                self.lineEdit_address.setText("10.82.66.65")
-                self.lineEdit_address.setDisabled(True)
-                try: 
-                    self.ftp.connect(host, username=user, password=pw, port=port, timeout=3)
-                    self.group_SimulationType.setEnabled(True)
-                    self.push_connection.setText("Disconnect")
-                    self.check_FTP.setChecked(True)
-                    print ("Success!!")
-                    self.default_user = True 
-
-                    self.connectionStatus = True
-                    self.filename.setText(" Opening sftp.")
-                    self.sftp = self.ftp.open_sftp()
-                    self.filename.setText("Connected!!")
-                    self.radio_Manual.setDisabled(True)
-
-                except Exception as EX: 
-                    self.connectionStatus = False 
-                    self.push_connection.setText("Connect")
-                    self.filename.setText(str(EX))
-                    self.check_FTP.setChecked(False)
-                    print (EX)
-
-            
+            except Exception as EX: 
+                self.connectionStatus = False 
+                self.push_connection.setText("Connect")
+                self.filename.setText(str(EX))
+                self.check_FTP.setChecked(False)
+                print (EX)
 
         else: 
             self.ftp.close()
@@ -1240,51 +1220,6 @@ class Ui_MainWindow(object):
         
         self.jobStatus()
 
-        if self.connectionStatus: 
-            try: 
-                s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                s.connect(("8.8.8.8", 80))
-                local_add = s.getsockname()[0]
-                s.close()
-
-                logfile ="/home/users/h20200155/MyProgram/ISLM_Smart_log.txt"
-                locallog = 'ISLM_Smart_log.txt'
-                
-                cnt = 1 
-                try: 
-                    self.sftp.get(logfile, locallog)
-
-                    current_user = self.lineEdit_hpc_ID.text().strip()
-
-                    with open(locallog) as LF: 
-                        lines = LF.readlines()
-                    
-                    for i, line in enumerate(lines): 
-                        wds = line.split(",")
-                        if wds[0].strip() == local_add and wds[3].strip().upper() == current_user.upper(): 
-                            cnt = int(wds[1].strip())+1 
-                            lines[i] = "%s,%d, %s, %s\n"%(wds[0].strip(), cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())), self.lineEdit_hpc_ID.text() )
-                            break 
-                    else: 
-                        firstline= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())), self.lineEdit_hpc_ID.text() )
-                        lines[0]= firstline + lines[0] 
-                except Exception as EX: 
-                    # print(EX)
-                    lines= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())), self.lineEdit_hpc_ID.text() )
-
-
-                fp = open(locallog, 'w')
-                fp.writelines(lines)
-                fp.close()
-
-                self.sftp.put(locallog, logfile)
-                remove(locallog)
-
-                
-            except Exception as EX: 
-                # print(EX) 
-                pass 
-
     
     def addComparingBoundary_check(self):
         if self.boundaryplotting : 
@@ -1294,18 +1229,16 @@ class Ui_MainWindow(object):
             files =[]
             items = []
             pressures =[]
-            colors = []; marks=[]; sizes=[]
             for i in range(self.fn+1): 
-                if self.chbox[i].isChecked(): 
-                    if not self.foots[i].ISLM_boundary_Init : 
-                         boundaries.append(self.foots[i].boundary)
-                    elif self.radio_ISLM_org.isChecked() and self.foots[i].ISLM_boundary_Init: 
+                if self.checkboxes[i].isChecked(): 
+                    if self.radio_ISLM_org.isChecked(): 
                         boundaries.append(self.foots[i].ISLM_boundary_Init)
-
-                    elif self.radio_ISLM_cali.isChecked() and self.foots[i].ISLM_caliboundary_Init : 
-                        boundaries.append(self.foots[i].ISLM_caliboundary_Init)
-                    elif  self.radio_ISLM_cali.isChecked() and not self.foots[i].ISLM_caliboundary_Init :
-                        boundaries.append(self.foots[i].ISLM_boundary_Init)
+                        
+                    elif self.radio_ISLM_cali.isChecked(): 
+                        if self.foots[i].ISLM_caliboundary_Init:
+                            boundaries.append(self.foots[i].ISLM_caliboundary_Init)
+                        else: 
+                            boundaries.append(self.foots[i].ISLM_boundary_Init)
                     else: 
                         boundaries.append(self.foots[i].boundary)
 
@@ -1314,9 +1247,7 @@ class Ui_MainWindow(object):
                     if name[-12:] == 'postfoot.dat': name = name[:-13]
                     files.append(name)
                     items.append(i)
-                    colors.append(self.combo_color[i].currentText())
-                    marks.append(self.combo_mark[i].currentText())
-                    sizes.append(float(self.tableWidget.item(i, 4).text().strip()))
+
                     
                     if self.radio_calculation.isChecked(): 
                         pressures.append([self.foots[i].px, self.foots[i].py, self.foots[i].pv])
@@ -1329,20 +1260,15 @@ class Ui_MainWindow(object):
                 return 
             if self.checkBox_showGrv.isChecked(): 
                 if self.checkBox_showBndPressure.isChecked(): 
-                    self.figure.plotComparing(boundaries, legends=files, 
-                    items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures, 
-                    colors=colors, marks=marks, sizes=sizes)
+                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures)
                 else: 
-                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()),
-                    grv=grooves, pressure=None,  colors=colors, marks=marks, sizes=sizes)
+                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=None)
 
             else: 
                 if self.checkBox_showBndPressure.isChecked(): 
-                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=None,
-                     pressure=pressures, colors=colors, marks=marks, sizes=sizes)
+                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=None, pressure=pressures)
                 else: 
-                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=None, 
-                    pressure=None, colors=colors, marks=marks, sizes=sizes)
+                    self.figure.plotComparing(boundaries, legends=files, items=items, size=float(self.lineEdit_pointSize.text()), grv=None, pressure=None)
             self.filename.setText("Boundaries plotted")
             self.checkBox_6.setChecked(False)
             if self.check_showFittingPoints.isChecked(): 
@@ -1428,7 +1354,7 @@ class Ui_MainWindow(object):
         self.lineEdit_rotating.setText('0')
         N_start = self.fn 
         if self.connectionStatus and not self.radio_Manual.isChecked(): 
-            self.radio_ISLM_org.setChecked(True)
+
             strVT = self.lineEdit_1_VT_Number.text()
             strVtNum = self.lineEdit_3_VT_Serial.text()
             strRevision = self.lineEdit_2_VT_Revision.text()
@@ -1447,15 +1373,8 @@ class Ui_MainWindow(object):
                     self.lineEdit_DOE_ID.setText(DOE_Number[3:])
                     self.radio_DOE.setChecked(True)
                     self.lineEdit_5_Sim_Num.setText("1")
-                    # strSimNum = '1'
-                    # sim[4] = '1'
-                    self.filename.setText("CHECK THE SIMULATION SERIAL No.")
                 else: 
                     self.radio_Single.setChecked(True)
-                    self.lineEdit_2_VT_Revision.setText("0")
-                    self.filename.setText("CHECK THE MODEL REVISION No.")
-                    # strRevision = '0'
-                    # sim[2] = '0' 
 
                 self.lineEdit_1_VT_Number.setText(sim[0])
                 self.lineEdit_3_VT_Serial.setText(sim[1])
@@ -1499,9 +1418,7 @@ class Ui_MainWindow(object):
             else: 
                 self.loading()
             self.add_log(self.textBrowser.toPlainText())
-            
         else: 
-            
             self.loading()
             self.add_log(self.textBrowser.toPlainText())
 
@@ -1514,13 +1431,9 @@ class Ui_MainWindow(object):
         self.check_showFittingPoints.setEnabled(True)
         self.check_showFittingPoints.setChecked(False)
 
-        if self.radio_Manual.isChecked(): 
-            self.radio_calculation.setChecked(True)
-
         self.checkView()
         self.radio_ISLM_cali.setEnabled(False)
 
-        
         if N_start == self.fn: 
             self.filename.setText("No image is loaded!")
 
@@ -1629,10 +1542,7 @@ class Ui_MainWindow(object):
         self.foots[self.fn].ISLM_FPC  =None
 
         if self.connectionStatus: 
-            if self.radio_Manual.isChecked(): self.radio_calculation.setChecked(True)
-
             if ".odb" in self.lineEdit_smartFile.text() and self.radio_Manual.isChecked():
-                
                 try:  
                     self.abaqusFootdata("")
                 except Exception as EX: 
@@ -1652,10 +1562,8 @@ class Ui_MainWindow(object):
                     # self.filename.setText("No such file! Check Simulation ID")
                     self.fn -= 1
                     return 
-                
             self.filename.setText( simulationID )
         else: 
-            self.radio_calculation.setChecked(True)
             jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.sfric0* *.dat, *.odb)")
             if jobFile: 
                 self.cwd = getCWD(jobFile)
@@ -1731,6 +1639,23 @@ class Ui_MainWindow(object):
                                                                     self.foots[self.fn].ISLM_contourY,\
                                                                     self.foots[self.fn].ISLM_contourV,\
                                                                     vmin=self.vmin, displim=0.25, savefile=None)
+                # if isfile(self.localCaliContour):  # not available 
+                #     with open(self.localCaliContour) as F: 
+                #         lines = F.readlines()
+                #     for line in lines: 
+                #         wd = line.split(",") 
+                #         self.foots[self.fn].ISLM_cali_contourX.append(float(wd[1].strip()))
+                #         self.foots[self.fn].ISLM_cali_contourY.append(float(wd[0].strip()))
+                #         self.foots[self.fn].ISLM_cali_contourV.append(float(wd[2].strip()))
+                #     self.foots[self.fn].ISLM_cali = True 
+
+                #     self.foots[self.fn].ISLM_cali_contourX = np.array(self.foots[self.fn].ISLM_cali_contourX)
+                #     self.foots[self.fn].ISLM_cali_contourY = np.array(self.foots[self.fn].ISLM_cali_contourY)
+                #     self.foots[self.fn].ISLM_cali_contourV = np.array(self.foots[self.fn].ISLM_cali_contourV)
+                # else: 
+                #     self.foots[self.fn].ISLM_cali = False 
+                #     self.radio_ISLM_cali.setChecked(False)
+                #     self.radio_ISLM_cali.setEnabled(False)
 
 
                 self.foots[self.fn].nodes, self.foots[self.fn].surfaces, self.foots[self.fn].offset, \
@@ -1945,6 +1870,9 @@ class Ui_MainWindow(object):
 
             self.printObjectFPC(self.foots[self.fn])
 
+            
+
+
             self.filename.setText("Footprint was loaded")
             if self.fn == 0: 
                 txt = "\n\n FP%d: "%(self.fn+1)
@@ -1958,18 +1886,6 @@ class Ui_MainWindow(object):
                 txt += ', Roundness=%.1f\n'%(self.foots[self.fn].ISLM_roundness*100)
                 txt += ' : Center Length=%.1f, Width=%.1f\n\n'%(self.foots[self.fn].ISLM_lengths[10], self.foots[self.fn].ISLM_widths[10])
 
-                if camber : ## node.Rotate(camber, xy=23)
-                    
-                    cangle = np.radians(camber)
-                    self.foots[self.fn].camber = cangle 
-                    repos =[]
-                    for nd in self.foots[self.fn].edges[0]: 
-                        ni = nd[0]; n1 = nd[1]
-                        n2 = np.cos(cangle)*nd[2] + np.sin(cangle)*nd[3]
-                        n3 = -np.sin(cangle)*nd[2] + np.cos(cangle)*nd[3]
-                        repos.append([ni, n1, n2, n3])
-                    self.foots[self.fn].edges[0] = np.array(repos)
-                    
             else: 
                 txt += ' : Area(Actual/Total) = %.1f/%.1f'%(self.foots[self.fn].actualArea*10000, self.foots[self.fn].totalArea*10000)
                 txt += ', Roundness=%.1f\n'%(self.foots[self.fn].roundness*100)
@@ -2007,8 +1923,9 @@ class Ui_MainWindow(object):
             else: 
                 self.current[i].setEnabled(False)
 
-        jobname = jobFile.split("/")[-1]
-        self.tableWidget.setItem(self.fn, 1, QtWidgets.QTableWidgetItem(jobname))
+        self.current[fn-1].setChecked(True)
+
+        self.checkboxes[self.fn].setEnabled(True)
 
     def reCalculatingFPC(self, fn=None ):
         
@@ -2098,19 +2015,10 @@ class Ui_MainWindow(object):
         if self.foots[fn].ISLM and self.radio_ISLM_org.isChecked(): 
             if self.checkBox_showProfile.isChecked() and self.foots[fn].edges:
                 edges = self.foots[fn].edges 
-                if self.foots[fn].initial_shift: 
-                    nodes = np.array(edges[0])
-                    nymax = np.max(nodes[:,3])
-                    en =[]
-                    for n in nodes: 
-                        n2 = np.cos(self.foots[fn].camber)*n[2] + np.sin(self.foots[fn].camber)*(n[3]-nymax)
-                        n3 = -np.sin(self.foots[fn].camber)*n[2] + np.cos(self.foots[fn].camber)*(n[3]-nymax)
-                        en.append([n[0], n[1], n2, n3])
-
                 idx = np.where(self.foots[fn].ISLM_contourV>=self.foots[fn].vmin)[0]
                 self.figure.Plotting(self.foots[fn].ISLM_contourX[idx], self.foots[fn].ISLM_contourY[idx],\
                     self.foots[fn].ISLM_contourV[idx], vmin=self.foots[fn].vmin, vmax=self.foots[fn].vmax,\
-                        size=self.size, contour=True, profile=[ np.array(en), edges[1]], lateralShift=self.foots[fn].lateralShift)
+                        size=self.size, contour=True, profile=edges, lateralShift=self.foots[fn].lateralShift)
 
             else: 
                 idx = np.where(self.foots[fn].ISLM_contourV>=self.foots[fn].vmin)[0]
@@ -2124,21 +2032,8 @@ class Ui_MainWindow(object):
         if self.radio_calculation.isChecked(): 
             if self.checkBox_showProfile.isChecked() and self.foots[fn].edges:
                 edges = self.foots[fn].edges 
-                if self.foots[fn].initial_shift: 
-                    nodes = np.array(edges[0])
-                    nymax = np.max(nodes[:,3])
-                    en =[]
-                    for n in nodes: 
-                        n2 = n[2]+ self.foots[fn].initial_shift
-                        n2 = np.cos(self.foots[fn].camber)*n2 + np.sin(self.foots[fn].camber)*(n[3]-nymax)
-                        n3 = -np.sin(self.foots[fn].camber)*n2 + np.cos(self.foots[fn].camber)*(n[3]-nymax)
-
-                        en.append([n[0], n[1], n2, n3])
-                    # edges[0] = np.array(en)
-                    print (" Profile applying the initial shift ",  self.foots[fn].initial_shift)
-
                 self.figure.Plotting(self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs, \
-                    vmin=self.foots[fn].vmin, vmax=self.foots[fn].vmax, size=self.size, profile=[ np.array(en), edges[1]], lateralShift=self.foots[fn].lateralShift)
+                    vmin=self.foots[fn].vmin, vmax=self.foots[fn].vmax, size=self.size, profile=edges, lateralShift=self.foots[fn].lateralShift)
             else: 
                 self.figure.Plotting(self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs, \
                     vmin=self.foots[fn].vmin, vmax=self.foots[fn].vmax, size=self.size)
@@ -2235,7 +2130,6 @@ class Ui_MainWindow(object):
         # self.viewRefPoints()
 
     def printObjectFPC(self, foot, add=False): 
-        lengths=[]
         if self.radio_ISLM_org.isChecked(): 
             if foot.ISLM_totalArea : 
                 actualArea = foot.ISLM_actualArea
@@ -2253,7 +2147,6 @@ class Ui_MainWindow(object):
                 self.radio_ISLM_org.setDisabled(True)
                 self.radio_ISLM_cali.setChecked(False)
                 self.radio_ISLM_cali.setDisabled(True)
-                self.radio_calculation.setChecked(True)
             # self.filename.setText("FPCs base on Contact Center")
         elif self.radio_ISLM_cali.isChecked(): 
             if foot.ISLM_cali_totalArea : 
@@ -2272,7 +2165,6 @@ class Ui_MainWindow(object):
                 self.radio_ISLM_org.setDisabled(True)
                 self.radio_ISLM_cali.setChecked(False)
                 self.radio_ISLM_cali.setDisabled(True)
-                self.radio_calculation.setChecked(True)
             # self.filename.setText("FPCs base on Contact Center")
 
         else: 
@@ -2423,7 +2315,6 @@ class Ui_MainWindow(object):
 
         # else: 
 
-        
         xs, ys, pv, ActualArea, shift, surf_values = interpolation_footprint_pressure(vmin=self.vmin, vmax=self.vmax, rotating=self.angle, \
             dotNum=self.density, trd=10**7, nodes=nodes, surfaces=surfaces, post=True, Yshift=lateralShift, ptn=ptnmesh,\
                 offset=offset, layoutCenterNode=centertop)
@@ -2554,13 +2445,25 @@ class Ui_MainWindow(object):
 
         self.pushPointSize.setDisabled(True)
         self.pushPointsDensity.setDisabled(True)
+        # self.lineEdit_address.setDisabled(True)
         self.jobStatus()
 
         for _ in range(self.FN): 
             self.foots.append(FOOTPRINT())
 
         self.current = [self.radioButton_print1, self.radioButton_print2, self.radioButton_print3, self.radioButton_print4, self.radioButton_print5, self.radioButton_print6]
+        self.checkboxes = [self.checkBox, self.checkBox_2, self.checkBox_3, self.checkBox_4, self.checkBox_5, self.checkBox_19, \
+             self.checkBox_7,  self.checkBox_8,  self.checkBox_9,  self.checkBox_10,  self.checkBox_11,  self.checkBox_12,  self.checkBox_13, \
+                  self.checkBox_14,  self.checkBox_15,  self.checkBox_16,  self.checkBox_17,  self.checkBox_18]
+        for i in range(self.FN): 
+            self.checkboxes[i].setDisabled(True) 
 
+        self.checkBox.setDisabled(True)
+        self.checkBox_2.setDisabled(True)
+        self.checkBox_3.setDisabled(True)
+        self.checkBox_4.setDisabled(True)
+        self.checkBox_5.setDisabled(True)
+        self.checkBox_11.setDisabled(True)
 
         self.radioButton_print1.setDisabled(True)
         self.radioButton_print2.setDisabled(True)
@@ -2582,8 +2485,6 @@ class Ui_MainWindow(object):
         self.checkBox_showGrv.setChecked(True)
         self.checkBox_showBndPressure.setChecked(False)
         self.checkBox_showProfile.setChecked(False)
-
-        self.group_SimulationType.setEnabled(False)
 
         # self.checkBox_showBndPressure.setDisabled(True)
 
@@ -2831,7 +2732,7 @@ class Ui_MainWindow(object):
         else: 
             fp = open(self.settingFile, 'w') 
             fp.write("address=10.82.66.65\n")
-            fp.write("id=ISLM_USER\n")
+            fp.write("id=h2..\n")
             fp.write("user=single\n")
             fp.write("doe=2100000\n")
             fp.write("loc=RND\n")
@@ -2873,8 +2774,7 @@ class Ui_MainWindow(object):
             if 'user=' in line: 
                 if 'single' in line: self.radio_Single.setChecked(True)
                 elif 'doe' in line:  self.radio_DOE.setChecked(True)
-                else: 
-                    if self.default_user: self.radio_Manual.setChecked(True)
+                else: self.radio_Manual.setChecked(True)
             if 'doe=' in line: 
                 self.lineEdit_DOE_ID.setText(wd.strip())
             if 'loc=' in line: self.lineEdit_0_Location.setText(wd.strip())

@@ -12,3 +12,15 @@ __pycache__/
 *.png 
 .ico.spec
 abaqus.*
+*.sfric*
+*.txt
+*.ui
+*.dat
+*.zip 
+*.spec 
+*.axi
+*.trd
+*.inp 
+*.dat
+searched*.*
+filename_*
