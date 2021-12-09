@@ -823,7 +823,7 @@ def ResultSfric(model="", result="", sfric='', deformed=1, ht=8.0E-03, sfht=1.0E
             break 
 
     resultsfile.close()
-
+    
     for rdg in DeformedRigid.Node:
         if rdg[0] == sfric.Rim.Node[0][0]:  
             sfric.Rim.Node[0][1] += rdg[1]

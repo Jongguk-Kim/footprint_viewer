@@ -8,6 +8,7 @@ from time import time
 
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
+from numpy.core.overrides import array_function_dispatch
 from numpy.lib.arraysetops import isin
 
 
@@ -188,7 +189,7 @@ class myCanvas(FigureCanvas):
         FigureCanvas.__init__(self, self.figure)
         self.setParent(parent)
         self.canvas = FigureCanvas(self.figure)
-        self.toolbar = NavigationToolbar(self.canvas,self)
+        self.toolbar = NavigationToolbar(self.canvas, self)
 
         self.xs=[]; self.ys=[]
         self.mclick=0; self.clicked = 0 
@@ -371,12 +372,17 @@ class myCanvas(FigureCanvas):
         size *= 5
 
         if pressure: 
-            # print("*******************")
-            # for pre in pressure: 
-            #     print(pre)
-            # print("*******************")
+            distance = 0.1
+            tpress=[]
+            yrange = 0.001
+            for ps in pressure:
+                ix1 = np.where(ps[1] > -yrange)[0]
+                ix2 = np.where(ps[1] < yrange)[0]
+                ix = np.intersect1d(ix1, ix2) 
+                tpress.append([ps[0][ix], ps[1][ix], ps[2][ix] ])
+
             position = 10; maxp = 0 
-            for pt, ps in zip(pts, pressure): 
+            for pt, ps in zip(pts, tpress): 
                 mn = np.min(pt[1])
                 if position > mn: 
                     position = mn 
@@ -386,12 +392,9 @@ class myCanvas(FigureCanvas):
 
             height_graph = 0.2 
             scale = height_graph / maxp 
-
             position -= height_graph
 
-            distance = 0.1
-            yrange = 0.001
-
+        EA = len(pts)
         
         if isinstance(grv, type(None)): 
             cnt = 0 
@@ -399,7 +402,7 @@ class myCanvas(FigureCanvas):
                 size = sizes[cnt]
                 self.ax.scatter(pt[0], pt[1], c=colors[cnt], s=size*3,   marker=marks[cnt], label=legends[cnt])
                 if pressure: 
-                    self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt])
+                    self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA )
                 cnt += 1 
         else: 
             cnt = 0 
@@ -419,7 +422,7 @@ class myCanvas(FigureCanvas):
                                     self.ax.plot(xs, ys, c=colors[cnt], linewidth=size*0.1, ls=':' )
 
                     if pressure: 
-                        self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt])
+                        self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA)
 
                 cnt += 1 
 
@@ -432,7 +435,7 @@ class myCanvas(FigureCanvas):
         self.figure.canvas.draw()
 
 
-    def add_pressure(self, pressure, yrange=0.001, distance=0.02, below=True, position=0, size=1, color='black', scale=1, mark='*'): 
+    def add_pressure(self, pressure, yrange=0.001, distance=0.02, below=True, position=0, size=1, color='black', scale=1, mark='*', EA=1): 
         xs = pressure[0]; ys=pressure[1]; pv = pressure[2] 
 
         yrange = 0.001 
@@ -443,7 +446,6 @@ class myCanvas(FigureCanvas):
         indexs = np.argsort(xpress)
         axs = xpress[indexs]
         avs = press[indexs]
-
         avs *= scale 
 
         if not below: 
@@ -454,6 +456,30 @@ class myCanvas(FigureCanvas):
         # self.ax.scatter(axs, avs-shift, c=color, s=size, edgecolors=None, linewidths=0.0, marker=mark)
         cnt = 0 
         gap = 0.001
+
+        minValue = np.min(avs) 
+        cnt = 0 
+        sumdist = 0 
+        j = 0 
+        for lx, ly in zip(axs, avs):
+            if ly > minValue*1.2: 
+                tDist = abs(lx - axs[j-1])
+                if avs[j-1] < minValue*1.1 or tDist > 0.005: continue 
+                sumdist += tDist
+                cnt +=1 
+            if cnt == 10: 
+                break 
+            j += 1 
+        avgDist = sumdist / 10 
+        if EA > 1: 
+            if gap < avgDist : 
+                gap = avgDist * 1.5
+        else: 
+            gap = avgDist * 0.3
+        # print (" Pressure Avg. Dist=%.2E Points Gap=%.2E"%(avgDist*1000, gap*1000))
+        
+        
+        cnt = 0 
         points=[]
         for lx, ly in zip(axs, avs):
             if cnt ==0: 
@@ -518,6 +544,36 @@ class myCanvas(FigureCanvas):
                     if len(lines): 
                         for line in lines: 
                             self.ax.plot(line[0], line[1], linewidth = 0.5)
+
+                yrange = 0.001 
+                ix1 = np.where(ys>-yrange)[0]; ix2 = np.where(ys<yrange)[0]
+                ix = np.intersect1d(ix1, ix2)
+
+                xpress = xs[ix]; press = pv[ix]
+                indexs = np.argsort(xpress)
+                axs = xpress[indexs]
+                avs = press[indexs]
+
+                height_graph = 0.15 
+                maxPress = np.max(avs) 
+                avs *= height_graph / maxPress 
+
+                if not profile: 
+                    yprofile = np.max(avs)
+                else: 
+                    yprofile = np.min(avs)
+                shift =yprofile - ymin + distance 
+                avs -= shift 
+
+                points=[]
+                for ax, av in zip(axs, avs): 
+                    if len(points): 
+                        points.append([ax, -shift])
+                    points.append([ax, av])
+                    points.append([ax, -shift])
+
+                polygon = plt.Polygon(np.array(points), linewidth=size*2, edgecolor='gray', facecolor='none', closed=False)
+                self.ax.add_patch(polygon)
                 
             else: 
                 npn, edges = profile
@@ -534,25 +590,35 @@ class myCanvas(FigureCanvas):
                 distance = 0.0
                 ymin = np.max(ypf)
 
-            yrange = 0.001 
-            ix1 = np.where(ys>-yrange)[0]; ix2 = np.where(ys<yrange)[0]
-            ix = np.intersect1d(ix1, ix2)
+                yrange = 0.001 
+                ix1 = np.where(ys>-yrange)[0]; ix2 = np.where(ys<yrange)[0]
+                ix = np.intersect1d(ix1, ix2)
 
-            xpress = xs[ix]; press = pv[ix]
-            indexs = np.argsort(xpress)
-            axs = xpress[indexs]
-            avs = press[indexs]
+                xpress = xs[ix]; press = pv[ix]
+                indexs = np.argsort(xpress)
+                axs = xpress[indexs]
+                avs = press[indexs]
 
-            height_graph = 0.2 
-            maxPress = np.max(avs) 
-            avs *= height_graph / maxPress 
+                height_graph = 0.2 
+                maxPress = np.max(avs) 
+                avs *= height_graph / maxPress 
 
-            if not profile: 
-                yprofile = np.max(avs)
-            else: 
-                yprofile = np.min(avs)
-            shift =yprofile - ymin + distance 
-            self.ax.scatter(axs, avs-shift, c='blue',s=size*10, edgecolors=None, linewidths=0.0)
+                if not profile: 
+                    yprofile = np.max(avs)
+                else: 
+                    yprofile = np.min(avs)
+                shift =yprofile - ymin + distance 
+                avs -= shift 
+                # self.ax.scatter(axs, avs-shift, c='blue',s=size*10, edgecolors=None, linewidths=0.0)
+                points=[]
+                for ax, av in zip(axs, avs): 
+                    if len(points): 
+                        points.append([ax, 0])
+                    points.append([ax, av])
+                    points.append([ax, 0])
+
+                polygon = plt.Polygon(np.array(points), linewidth=size*2, edgecolor='gray', facecolor='none', closed=False)
+                self.ax.add_patch(polygon)
 
             
         else: 

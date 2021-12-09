@@ -21,27 +21,33 @@ def timer(func):
 def Edge_Boundary(surf): 
     
     edges = []
+    sfedge = []
     for sf in surf: 
         edges.append([sf[1], sf[2], 1, sf[0], 0, sf[5][0], sf[5][1] ])
         edges.append([sf[2], sf[3], 2, sf[0], 0, sf[5][1], sf[5][2]])
+        sfedge.append([sf[1], sf[2], 1, sf[0], 0])
+        sfedge.append([sf[2], sf[3], 2, sf[0], 0])
         if sf[4] > 10**7: 
             edges.append([sf[3], sf[4], 3, sf[0], 0, sf[5][2], sf[5][3]])
             edges.append([sf[4], sf[1], 4, sf[0], 0, sf[5][3], sf[5][0]])
+            sfedge.append([sf[3], sf[4], 3, sf[0], 0])
+            sfedge.append([sf[4], sf[1], 4, sf[0], 0])
         else: 
             edges.append([sf[3], sf[1], 3, sf[0], 0, sf[5][2], sf[5][0]])
-    
-    edges = np.array(edges)
+            sfedge.append([sf[3], sf[1], 3, sf[0], 0])
+
+    sfedge = np.array(sfedge)
 
     bde=[]
-    for i, ed in enumerate(edges): 
-        if ed[4] >0: 
+    for i, ed in enumerate(sfedge): 
+        if edges[i][4] >0: 
             continue 
-        ix1 = np.where(edges[:,:2]==ed[0])[0]
-        ix2 = np.where(edges[:,:2]==ed[1])[0]
+        ix1 = np.where(sfedge[:,:2]==ed[0])[0]
+        ix2 = np.where(sfedge[:,:2]==ed[1])[0]
         ix = np.intersect1d(ix1, ix2)
         if len(ix) ==1: 
-            ed[4] = 1
-            bde.append(ed)
+            edges[i][4] = 1
+            bde.append(edges[i])
         else:
             N = len(ix)
             for x in ix:
@@ -60,6 +66,8 @@ class FOOTPRINT():
         self.workingfile = None 
         self.ISLM = False 
         self.ISLM_cali  = False 
+        self.tireSize = False 
+        self.tirePattern = False 
 
 
         ## from footprint data 
