@@ -12,6 +12,7 @@ from numpy.core.overrides import array_function_dispatch
 from numpy.lib.arraysetops import isin
 
 
+
 def userformat(color, style=''):
     """Return a QTextCharFormat with the given attributes.
     """
@@ -201,6 +202,58 @@ class myCanvas(FigureCanvas):
         self.fpcTexts=[]
 
         self.fontsize = 10
+
+        ##############################################################
+        self.norm = plt.Normalize(1,4)
+        self.cmap = plt.cm.RdYlGn
+        self.annot = plt.annotate("", xy=(0,0), xytext=(20,20),textcoords="offset points",
+                    bbox=dict(boxstyle="round", fc="w"),
+                    arrowprops=dict(arrowstyle="->"))
+        self.annot.set_visible(False)
+        # self.ax = self.figure.add_subplot(111)
+        self.c = np.random.randint(1,5,size=15)
+
+        self.shift = 0 
+        self.scale = 1.0 
+
+        self.valuepointx=None
+        self.valuepointy=None
+        self.valuepoint=None
+        
+        ##############################################################
+
+    def hover(self, event): 
+        vis = self.annot.get_visible() 
+        if event.inaxes == self.ax: 
+            cont, ind = self.sc.contains(event) 
+            if cont: 
+                self.annot.set_visible(False)
+                pos = self.sc.get_offsets()[ind["ind"][0]]
+                # Pres = (pos[1] + self.shift) / self.scale * 10E-7
+                gap = 0.00001
+                
+                ix1=np.where(self.valuepointx>pos[0]-gap)[0]
+                ix2=np.where(self.valuepointx<pos[0]+gap)[0]
+                ix = np.intersect1d(ix1, ix2)
+                while not len(ix): 
+                    gap += 0.00002
+                    ix1=np.where(self.valuepointx>pos[0]-gap)[0]
+                    ix2=np.where(self.valuepointx<pos[0]+gap)[0]
+                    ix = np.intersect1d(ix1, ix2)
+
+                if len(ix): 
+                    Pres = self.valuepoint[ix[0]] * 10E-7
+                    self.annot = plt.annotate("Press=%.2fMpa"%(Pres), xy=[pos[0]+0.01, pos[1]+0.01], xytext=[pos[0]+0.01, pos[1]+0.01],textcoords="offset points",
+                        bbox=dict(boxstyle="round", fc="w"),
+                        arrowprops=dict(arrowstyle="->", alpha=0.4))
+                    self.annot.set_visible(True)
+                    self.figure.canvas.draw_idle()
+            else: 
+                if vis: 
+                    self.annot.set_visible(False)
+                    self.figure.canvas.draw_idle()
+
+
     def Area(self, ix=[], iy=[]): 
         x =[]; y=[]
         for px, py in zip(ix, iy):
@@ -393,16 +446,21 @@ class myCanvas(FigureCanvas):
             height_graph = 0.2 
             scale = height_graph / maxp 
             position -= height_graph
+            
+            self.scale = scale 
+            
 
         EA = len(pts)
         
+        vsx=[]; vsy=[]; vsv=[]
         if isinstance(grv, type(None)): 
             cnt = 0 
             for i, pt in zip(items, pts): 
                 size = sizes[cnt]
                 self.ax.scatter(pt[0], pt[1], c=colors[cnt], s=size*3,   marker=marks[cnt], label=legends[cnt])
                 if pressure: 
-                    self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA )
+                    vx, vy, vv = self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA )
+                    vsx.append(vx); vsy.append(vy); vsv.append(vv)
                 cnt += 1 
         else: 
             cnt = 0 
@@ -422,11 +480,22 @@ class myCanvas(FigureCanvas):
                                     self.ax.plot(xs, ys, c=colors[cnt], linewidth=size*0.1, ls=':' )
 
                     if pressure: 
-                        self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA)
+                        vx, vy, vv = self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=scale, mark=marks[cnt], EA=EA)
+                        vsx.append(vx); vsy.append(vy); vsv.append(vv)
 
                 cnt += 1 
 
         plt.legend(fontsize=8, loc=1)
+
+        if pressure: 
+            valueX=[]; valueY=[]; value=[]
+            for x, y, v in zip(vsx, vsy, vsv): 
+                valueX += x; valueY += y; value += v 
+            self.sc = self.ax.scatter(valueX, valueY, s=size*3, edgecolors=None, c=None, linewidths=0.0, marker=None)
+            self.figure.canvas.mpl_connect("motion_notify_event", self.hover)
+            self.valuepointx = np.array(valueX)
+            self.valuepointy = np.array(valueY) 
+            self.valuepoint = np.array(value )
 
         # lim = 0.25
         # self.ax.scatter([lim, lim, -lim, -lim], [-lim, lim, lim, -lim], edgecolors=None, linewidths=0.0, c='gray', s=0.01)
@@ -453,6 +522,7 @@ class myCanvas(FigureCanvas):
         else: 
             shift = - position + distance 
 
+        self.shift = shift
         # self.ax.scatter(axs, avs-shift, c=color, s=size, edgecolors=None, linewidths=0.0, marker=mark)
         cnt = 0 
         gap = 0.001
@@ -475,27 +545,60 @@ class myCanvas(FigureCanvas):
             if gap < avgDist : 
                 gap = avgDist * 1.5
         else: 
-            gap = avgDist * 0.3
+            gap =  0 #avgDist * 0.3
         # print (" Pressure Avg. Dist=%.2E Points Gap=%.2E"%(avgDist*1000, gap*1000))
         
         
         cnt = 0 
         points=[]
-        for lx, ly in zip(axs, avs):
+        ptx=[]; pty=[]; ptv=[]
+        Pvs = press[indexs]
+        gapCount = 0 
+        for lx, ly, lv in zip(axs, avs, Pvs):
             if cnt ==0: 
                 prex=lx 
                 points.append([lx, -shift])
             if lx - prex > gap and points[-1][1] != -shift: 
                 points.append([prex, -shift])
                 points.append([lx, -shift])
-            
+                gapCount += 1 
+            ptx.append(lx); pty.append(ly-shift); ptv.append(lv)
             points.append([lx, ly-shift])
             prex = lx 
             cnt += 1
+
+        if EA > 1: 
+            whilecount = 0 
+            while gapCount > 20: 
+                gap +=0.0005
+                cnt = 0 
+                points=[]
+                ptx=[]; pty=[]; ptv=[]
+                Pvs = press[indexs]
+                gapCount = 0 
+                for lx, ly, lv in zip(axs, avs, Pvs):
+                    if cnt ==0: 
+                        prex=lx 
+                        points.append([lx, -shift])
+                    if lx - prex > gap and points[-1][1] != -shift: 
+                        points.append([prex, -shift])
+                        points.append([lx, -shift])
+                        gapCount += 1 
+                    ptx.append(lx); pty.append(ly-shift); ptv.append(lv)
+                    points.append([lx, ly-shift])
+                    prex = lx 
+                    cnt += 1
+                
+                whilecount += 1 
+                if whilecount > 10: 
+                    break 
+            
+
         points.append([axs[-1], -shift])
         polygon = plt.Polygon(np.array(points), linewidth=size, edgecolor=color, facecolor='none', closed=False)
         self.ax.add_patch(polygon)
 
+        return ptx, pty, ptv 
 
     def Plotting(self, xs=None, ys=None, pv=None, **args) :
         ## points = plt.scatter(px, py, c=pv, s=size, cmap=cmap, vmin=vmin, vmax=vmin*10, edgecolors=None, linewidths=0.0 )
@@ -504,7 +607,7 @@ class myCanvas(FigureCanvas):
         adding = None 
         grid = False 
         files = False
-        filter = True
+        filter = True ## not islm data 
         contour = False 
         profile = False 
         lateralShift=0
@@ -527,7 +630,7 @@ class myCanvas(FigureCanvas):
             self.ax = self.figure.add_subplot(111)
             plt.axis('equal')   
 
-            if not profile: 
+            if not profile and len(xs): 
                 if not contour : 
                     self.ax.scatter(xs, ys, c=pv, s=size, cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=None, linewidths=0.0)
                 else: 
@@ -556,7 +659,9 @@ class myCanvas(FigureCanvas):
 
                 height_graph = 0.15 
                 maxPress = np.max(avs) 
-                avs *= height_graph / maxPress 
+                self.scale =  height_graph / maxPress 
+                avs *= self.scale
+                
 
                 if not profile: 
                     yprofile = np.max(avs)
@@ -564,18 +669,28 @@ class myCanvas(FigureCanvas):
                     yprofile = np.min(avs)
                 shift =yprofile - ymin + distance 
                 avs -= shift 
+                self.shift = shift  
 
                 points=[]
-                for ax, av in zip(axs, avs): 
+                valueX=[]; valueY=[]; value=[]
+                values = press[indexs]
+                for ax, av, vv in zip(axs, avs, values): 
                     if len(points): 
                         points.append([ax, -shift])
                     points.append([ax, av])
                     points.append([ax, -shift])
+                    valueX.append(ax); valueY.append(av); value.append(vv)
 
                 polygon = plt.Polygon(np.array(points), linewidth=size*2, edgecolor='gray', facecolor='none', closed=False)
                 self.ax.add_patch(polygon)
+                self.sc = self.ax.scatter(valueX, valueY, s=size*3, edgecolors=None, c=None, linewidths=0.0, marker=None)
+                self.figure.canvas.mpl_connect("motion_notify_event", self.hover)
+
+                self.valuepointx = np.array(valueX)
+                self.valuepointy = np.array(valueY) 
+                self.valuepoint = np.array(value )
                 
-            else: 
+            elif len(xs): 
                 npn, edges = profile
                 y_pf =[]
                 for ed in edges: 
@@ -611,16 +726,27 @@ class myCanvas(FigureCanvas):
                 avs -= shift 
                 # self.ax.scatter(axs, avs-shift, c='blue',s=size*10, edgecolors=None, linewidths=0.0)
                 points=[]
-                for ax, av in zip(axs, avs): 
+                valueX=[]; valueY=[]; value=[]
+                values = press[indexs]
+
+                for ax, av, vv in zip(axs, avs, values): 
                     if len(points): 
                         points.append([ax, 0])
                     points.append([ax, av])
                     points.append([ax, 0])
+                    valueX.append(ax); valueY.append(av); value.append(vv)
 
                 polygon = plt.Polygon(np.array(points), linewidth=size*2, edgecolor='gray', facecolor='none', closed=False)
                 self.ax.add_patch(polygon)
+                self.sc = self.ax.scatter(valueX, valueY, s=size*3, edgecolors=None, c=None, linewidths=0.0, marker=None)
+                self.figure.canvas.mpl_connect("motion_notify_event", self.hover)
 
-            
+                self.valuepointx = np.array(valueX)
+                self.valuepointy = np.array(valueY) 
+                self.valuepoint = np.array(value )
+
+            else: 
+                self.clearWindow()
         else: 
             # print ("PLOTTING MULTIPLE PLOTS")
             N = len(xs)
@@ -655,7 +781,6 @@ class myCanvas(FigureCanvas):
                     subs.append(self.figure.add_subplot(4,5,i+1))
 
             # t1 = time()
-            
             lim = 0 
             xx=[]; yy=[]; vv=[]
             for tx, ty, tv in zip(xs, ys, pv): 
@@ -667,21 +792,23 @@ class myCanvas(FigureCanvas):
                 if lim < abs(value): lim = abs(value)
                 value = np.max (ty) 
                 if lim < abs(value): lim = abs(value)
-                if N > 4 and filter : 
-                    cnt = 0 
-                    txx=[]; tyy=[]; tvv=[]
-                    for x, y, v in zip(tx, ty, tv): 
-                        if cnt % N: 
-                            txx.append(x); tyy.append(y); tvv.append(v)
-                        cnt += 1
-                    xx.append(np.array(txx)); yy.append(np.array(tyy)); vv.append(np.array(tvv))
-            if N > 4: 
-                xs = xx; ys = yy; pv = vv 
-            # print (" TIME = %.2fsec"%(time()-t1))
+            #     if N > 4 and filter : 
+            #         cnt = 0 
+            #         txx=[]; tyy=[]; tvv=[]
+            #         for x, y, v in zip(tx, ty, tv): 
+            #             if cnt % N: 
+            #                 txx.append(x); tyy.append(y); tvv.append(v)
+            #             cnt += 1
+            #         xx.append(np.array(txx)); yy.append(np.array(tyy)); vv.append(np.array(tvv))
+            # if N > 4: 
+            #     xs = xx; ys = yy; pv = vv 
+            # # print (" TIME = %.2fsec"%(time()-t1))
+            # print("PLOTS, XS", PLOTS, len(xs))
 
             lim *= 1.1
             cnt = 0 
             for cnt in range(PLOTS): 
+                
                 if cnt < len(xs): 
                     subs[cnt].axis('equal')
                     subs[cnt].axis('off')

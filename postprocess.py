@@ -966,11 +966,6 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
 
     pointsX2 = np.append( PointsUp[:, 0], PointsDown[:, 0])
     pointsY2 = np.append( PointsUp[:, 1], PointsDown[:, 1])
-
-    # plt.scatter(px, py)
-    savefig = False 
-    if savefig: 
-        plt.scatter(pointsX2, pointsY2, edgecolors=None, linewidths=0.0, s=0.5, c='gray')
             
     if abs(xMaxCnt) < abs(xMinCnt): 
         maxes[0] = xMaxCnt 
@@ -998,12 +993,6 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
 
     pointsX2 = np.append( PointsPos[:, 0], PointsNeg[:, 0])
     pointsY2 = np.append( PointsPos[:, 1], PointsNeg[:, 1])
-
-    if savefig:
-        plt.scatter(pointsX1, pointsY1, edgecolors=None, linewidths=0.0, s=0.3, c='black')
-        plt.scatter(pointsX2, pointsY2, edgecolors=None, linewidths=0.0, s=0.3, c='pink')
-        plt.savefig("FPC_Length_width.png")
-        plt.clf()
 
     uppoint  =0.0
 
@@ -1220,6 +1209,8 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
             cnt+=1
     upnode.Sort(item=2, reverse=True)
 
+    
+
 
     posnode = NODE()
     cnt = 0 
@@ -1252,12 +1243,8 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     areanode.Combine(negnodeDown)
     areanode.Node = Delete_Close_Points(areanode.Node, point_gap, backward=True )
 
-    if savefig: 
-        unNx=[];unNy=[]
-        for nd in areanode.Node: 
-            unNx.append(nd[2])
-            unNy.append(nd[3])
-    
+    npx=[]; npy=[]
+
     i = 1 
     PL=0 
     while i < len(areanode.Node)-1:
@@ -1266,11 +1253,14 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
         
         if i>2 and L1 > PL * 2 and L1 > point_gap*2 and L2 > point_gap*2: 
             # print ("** del", areanode.Node[i])
+            npx.append(areanode.Node[i][2]); npy.append(areanode.Node[i][3]); 
             del(areanode.Node[i]) 
             # continue 
         PL = L1 
         i += 1
 
+    
+    
     upx = []; upy=[]
     dwx = []; dwy=[]
     for nd in areanode.Node: 
@@ -1281,14 +1271,24 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
             dwx.append(nd[2])
             dwy.append(nd[3])
     deletedx=[]; deletedy=[]
-
     unsortedNode=[]
+    
     i = 1
     while i < len(upx): 
         cangle = Angle_Between_Vectors([0, 0, 1, 0], [0, 0, upx[i], upy[i]])
-        # print ("** Angle %.2f"%(math.degrees(cangle)) )
+        
         if i > 2: 
-            if cangle <pangle or abs(cangle - pangle) > 0.2 : 
+            if  i <= len(upx)-2: 
+                if abs(unsortedNode[-1][1] -  upx[i]) > abs(unsortedNode[-1][1] - upx[i+1]) and abs(unsortedNode[-1][1] -  upx[i]) > 0.01: 
+                    # print("%.3f, %.3f"%( upx[i], upy[i]))
+                    deletedx.append(upx[i]); deletedy.append(upy[i])
+                    upx = np.delete(upx, i)
+                    upy = np.delete(upy, i)
+                    continue
+
+            if cangle <pangle or abs(cangle - pangle) > 0.25  : 
+                # print("%.3f, %.3f"%( upx[i], upy[i]))
+                # print ("** Angle %.2f, pangle=%.2f"%(math.degrees(cangle), math.degrees(pangle)) )
                 deletedx.append(upx[i]); deletedy.append(upy[i])
                 upx = np.delete(upx, i)
                 upy = np.delete(upy, i)
@@ -1299,6 +1299,8 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
         
 
         i += 1 
+
+    print(" math degrees ", math.degrees(0.25))
     # print ("************************* ")
     i = 1
     while i < len(dwx): 
@@ -1307,7 +1309,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
         if i > 2: 
             if math.degrees(cangle) < 30.0 and math.degrees(pangle) > 150: 
                 pangle = 0 
-            if cangle < pangle or abs(cangle - pangle) > 0.2: 
+            if cangle < pangle or abs(cangle - pangle) > 0.25: 
                 deletedx.append(dwx[i]); deletedy.append(dwy[i])
                 dwx = np.delete(dwx, i)
                 dwy = np.delete(dwy, i)
@@ -1331,65 +1333,6 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     totalarea = Area(totalareapointx, totalareapointy)
     print ("** Total Area = %.2f"%(totalarea*10000))
     
-    
-    if savefig:  
-
-        size = 0.3
-
-        plt.axis('equal')
-        plt.xlabel("Lateral Position(m)", size=11)
-        plt.ylabel("Longitudinal Position(m)", size=11)
-        plt.xticks(size=10)
-        plt.yticks(size=10)
-        plt.title("Contact Pressure(Pa) Distribution", size=14)
-        plt.text(-displim + displim*0.1 , displim - displim*0.15, 'Original Image', fontsize=10, color='r')
-        plt.xlim(-displim, displim)
-        plt.ylim(-displim, displim)
-        points = plt.scatter(px, py, c=pv, s=size, cmap=cmap, vmin=vmin, vmax=vmin*10, edgecolors=None, linewidths=0.0 )
-        cbar = plt.colorbar(points)
-        cbar.ax.tick_params(labelsize='small')
-        # cbar.set_label("", size=8)
-        
-        # plt.scatter(totalareapointx, totalareapointy, c='black', s=size*10, edgecolors=None, linewidths=0 )
-        plt.plot(totalareapointx, totalareapointy, color='black', marker='o', lw=0.5, markersize=1, linestyle="-")
-        
-        plt.savefig(savefile+"-FittingCurve.png", dpi=dpi)
-        plt.clf()
-
-
-        plt.scatter(unNx, unNy, color='black', s=1)
-        plt.scatter(totalareapointx, totalareapointy, color='red', s=0.5)
-        plt.scatter(deletedx, deletedy, color='blue', s=0.5, marker='+')
-        plt.savefig("AreaDots.png")
-
-    # if maxlength < Lengths[2]/1000:  maxlength  = Lengths[2]/1000
-    # if Max_ContactWidth < Widths[2]/1000:  Max_ContactWidth  = Widths[2]/1000
-    if savefig: 
-        fp = open(savefile+"-FPC_Original.txt", 'w')
-        
-        if ProductLine == 'TBR': 
-            fp.write("ContactLength(mm) max/center/15%%/85%%=\t%5.1f/%5.1f/%5.1f/%5.1f\n"%(maxlength*1000, Lengths[2], Lengths[0], Lengths[4]))
-            fp.write("ContactWidth(mm)  max/center/25%%/75%%=\t%5.1f/%5.1f/%5.1f/%5.1f\n"%(Max_ContactWidth*1000, Widths[2], Widths[0], Widths[4]))
-            fp.write("SquareRatio(%%)=\t%.1f\n"%((Lengths[0]+Lengths[4])/Lengths[2]*50))
-        else: 
-            fp.write("ContactLength(mm) max/center/25%%/75%%=\t%5.1f/%5.1f/%5.1f/%5.1f\n"%(maxlength*1000, Lengths[2], Lengths[1], Lengths[3]))
-            fp.write("ContactWidth(mm)  max/center/25%%/75%%=\t%5.1f/%5.1f/%5.1f/%5.1f\n"%(Max_ContactWidth*1000, Widths[2], Widths[1], Widths[3]))
-            fp.write("SquareRatio(%%)=\t%.1f\n"%((Lengths[1]+Lengths[3])/Lengths[2]*50))
-        fp.write("ContactRatio(%%)=\t%.1f\n"%(ActualArea/totalarea*100))
-        roundness = (totalarea)/(maxlength*Max_ContactWidth)
-        fp.write("Roundness(%%)=\t%.1f\n"%(roundness*100))
-        fp.write("ActualContactArea(cm^2)=\t%.1f\n"%(ActualArea*10000))
-        fp.write("TotalContactArea(cm^2)=\t%.1f\n"%(totalarea*10000))
-        fp.write("DetailedContactLength(mm) 15/25/50/75/85=\t%.1f/%.1f/%.1f/%.1f/%.1f\n"%(Lengths[0], Lengths[1], Lengths[2], Lengths[3], Lengths[4]))
-        fp.write("DetailedContactWidth(mm) 15/25/50/75/85=\t%.1f/%.1f/%.1f/%.1f/%.1f\n"%(Widths[0], Widths[1], Widths[2], Widths[3], Widths[4]))
-
-        AvgContactPress = contactForce/ActualArea
-        fp.write("\nFrom\tTo\tContact Length(mm)\tActual Contact Area(cm^2)\tContact Pressure(pa)\tContact Force(N)\n")
-        fp.write("%.2f\t%.2f\t%.4f\t%.4f\t%.4f\n"%(xMax*1000, xMin*1000, ActualArea*10000, AvgContactPress, contactForce))
-
-
-        fp.write('\nIn-OutContactLength=\t0.0\n') ## for Wear Sensitivity simulation 
-
     Roundness = (totalarea)/(maxlength*Max_ContactWidth)
     contactRatio = ActualArea/totalarea*100
     if ActualArea : 
@@ -1399,24 +1342,6 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     
 
     # ActualArea 
-
-    cwd = getcwd()
-    if savefig:  
-        rpt = glob.glob(cwd+"/REPORT/frc*.rpt")[0]
-
-        with open(rpt) as IN: 
-            lines = IN.readlines()
-        for line in lines: 
-            if "FY_AVE" in line:
-                wd = line.split(":")
-                FY = wd[1]
-            if "FZ_AVE" in line:
-                wd = line.split(":")
-                FZ = wd[1]
-        fp.write("\nReaction Force!\n")
-        fp.write("Fy(Lateraldir.,N)=%s\n"%(FY.strip()))
-        fp.write("Fz(Verticaldir.,N)=%s\n\n"%(FZ.strip()))
-
 
     positions=[75, 77.5, 80, 82.5, 85, 87.5, 90, 92.5, 95, 97.5]
     FootPrintRatio=[]
@@ -1428,11 +1353,6 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
         length = (length1+length2)/2
         FootPrintRatio.append(length/maxlength)
         print ("    position %d%%, Length=%.2f Footprint ratio=%.2f"%(pos, length*1000, length/maxlength))
-
-    if savefig: 
-        fp.write("Footprint Ratios - (50%% - 95%% in 5%% increments)=\t%5.1f/%5.1f/%5.1f/%5.1f/%5.1f/%5.1f/%5.1f/%5.1f/%5.1f/%5.1f\n"%(FootPrintRatio[0]*100, \
-            FootPrintRatio[1]*100, FootPrintRatio[2]*100, FootPrintRatio[3]*100, FootPrintRatio[4]*100, FootPrintRatio[5]*100, FootPrintRatio[6]*100, FootPrintRatio[7]*100, \
-                FootPrintRatio[8]*100, FootPrintRatio[9]*100))
 
     del(FootPrintRatio[-1])
     Gullwing_ShapeFactor = 1 - max(FootPrintRatio) 
@@ -1512,49 +1432,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     # basicFPC = [Lengths, Widths, ActualArea, totalarea, Roundness, contactRatio, AvgContactPress]
     # advFPC = [Gullwing_ShapeFactor, Gullwing_localShapeFactor, RoundnessShapeFactor, Squareness_ShapeFactor, Coef_variation_cPress]
 
-    if savefig: 
-        fp.write('Gullwing Global Shape Factor=%6.3f\n' % Gullwing_ShapeFactor)
-        fp.write('Gullwing Local Shape Factor=%6.3f\n' % Gullwing_localShapeFactor )
-        fp.write('Roundness Shape Factor=%6.3f\n' % RoundnessShapeFactor)
-        fp.write('Squareness Shape Factor=%6.3f\n' % Squareness_ShapeFactor)
-        fp.write('Coef. Of Variation of CPress=%5.2f\n' % Coef_variation_cPress)
-            
-        fp.write("\n\nSuccess::Post::[Simulation Result] This simulation result was created successfully!!\n")
-        fp.close()
-
-        with open(savefile+"-FPC_Original.txt") as FP: 
-            lines = FP.readlines()
-
-        fp = open(savefile+"-FPC.txt", 'w')
-        for line in lines: 
-            fp.write(line)
-        fp.close()
-
-        ############################################################################
-        fpATC = open(savefile+"-FPC-Detail.txt", 'w')
-        fpATC.writelines('---------RIB-BY-RIB ANALYSIS---------\n')
-        fpATC.writelines('# of Ribs Detected = 0\t(Pattern Tire)\n')
-        fpATC.writelines('\n')
-        fpATC.writelines('Average Pressures (pa/psi)\n')
-        fpATC.writelines("\t%.2f\t/   %.3f\n"%(AvgContactPress, AvgContactPress*0.000145038))
-
-        fpATC.writelines('Max Contact Length of each Rib (mm/in)\n')
-        fpATC.writelines("\t%.2f\t/   %.3f\n"%(maxlength*1000, maxlength*39.3701))
-        fpATC.writelines('Actual / Total Contact Area (cm^2/in^2)\n')
-        fpATC.writelines("\t%.2f\t%.2f\t/   %.3f\t%.3f\n"%(ActualArea*10000, totalarea*10000, ActualArea*1550, totalarea*1550))
-        fpATC.writelines('Contact Force (N/lbs)\n')
-        fpATC.writelines("\t%.2f\t/   %.3f\n"%(contactForce, contactForce*0.224809))
-        fpATC.writelines('\n')
-
-        fpATC.writelines('Gullwing Global Shape Factor =%6.3f\n' % Gullwing_ShapeFactor)
-        fpATC.writelines('Gullwing Local Shape Factor	=%6.3f\n' % Gullwing_localShapeFactor)
-        fpATC.writelines('Roundness Shape Factor		=%6.3f\n' % RoundnessShapeFactor)
-        fpATC.writelines('Squareness Shape Factor		=%6.3f\n' % Squareness_ShapeFactor)
-        fpATC.writelines('Coef. Of Variation of CPress =%6.2f\n' % Coef_variation_cPress)
-        fpATC.writelines('\n')
-        fpATC.writelines('Success::Post::[Simulation Result] This simulation result was created successfully!!\n')
-        fpATC.close()
-    ############################################################################
+   
 
 def Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3): 
     i= 2 
@@ -1783,12 +1661,6 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
         rawX = np.append(rawX, pointsX); rawY = np.append(rawY, pointsY)
         return rawX, rawY
 
-    if savefig: 
-        plt.axis('equal')
-        plt.scatter(px, py, label="raw", edgecolors=None, linewidths=0.0, color='gray')
-        # plt.scatter(pointsX, pointsY)
-    
-
     ################################################################
     ymid = (ymax + ymin) / 2.0
     ylen = abs(ymax-ymid)
@@ -1898,7 +1770,9 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     if coef: 
         coefs =[A]
     
+    # import matplotlib.pyplot as plt 
     # plt.scatter(ptx, pty) 
+
     p1 =[]
     position = xmid
     # for k in range(uN-1): 
@@ -1953,6 +1827,16 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     print ("* Fitting Coefficient: ", A)
     print (" Down - Fitting Error %.6f, (iteration %d, %d)"%(err_value, cnt-1, len(ptx)))  
     # print (" Coefficients")
+
+    # plt.scatter(ptx, pty) 
+    # plt.axis('equal')
+    # if not isfile("points.png"): 
+    #     plt.savefig("points.png")
+    # else: 
+    #     plt.savefig("points01.png")
+    # plt.clf()
+
+
     # print (A)
     if coef: 
         coefs.append(A)

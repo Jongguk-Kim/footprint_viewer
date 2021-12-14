@@ -569,6 +569,25 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_boundarybox_loading">
           <item>
+           <widget class="QPushButton" name="pushButton_QuickLoad">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>330</width>
+              <height>30</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Quick Load (Not Calibrated)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QPushButton" name="pushButton_GeneratngFoot">
             <property name="minimumSize">
              <size>
@@ -583,7 +602,7 @@
              </size>
             </property>
             <property name="text">
-             <string>Load Footprint (Not Calibrated)</string>
+             <string>Load (Not Calibrated)</string>
             </property>
            </widget>
           </item>
@@ -628,30 +647,11 @@
           <property name="title">
            <string/>
           </property>
-          <widget class="QCheckBox" name="checkBox_6">
-           <property name="geometry">
-            <rect>
-             <x>10</x>
-             <y>7</y>
-             <width>50</width>
-             <height>16</height>
-            </rect>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>50</width>
-             <height>20</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Grid </string>
-           </property>
-          </widget>
           <widget class="QRadioButton" name="radio_plus0">
            <property name="geometry">
             <rect>
-             <x>70</x>
-             <y>8</y>
+             <x>10</x>
+             <y>10</y>
              <width>35</width>
              <height>16</height>
             </rect>
@@ -675,8 +675,8 @@
           <widget class="QRadioButton" name="radio_plus6">
            <property name="geometry">
             <rect>
-             <x>130</x>
-             <y>8</y>
+             <x>70</x>
+             <y>10</y>
              <width>35</width>
              <height>16</height>
             </rect>
@@ -700,8 +700,8 @@
           <widget class="QRadioButton" name="radio_plus12">
            <property name="geometry">
             <rect>
-             <x>190</x>
-             <y>8</y>
+             <x>130</x>
+             <y>10</y>
              <width>40</width>
              <height>16</height>
             </rect>
@@ -739,6 +739,25 @@
            </property>
            <property name="text">
             <string>Profile</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_grid">
+           <property name="geometry">
+            <rect>
+             <x>194</x>
+             <y>9</y>
+             <width>51</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>70</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Grid</string>
            </property>
           </widget>
          </widget>
@@ -785,9 +804,15 @@
             </item>
             <item>
              <widget class="QRadioButton" name="radioButton_print2">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
-                <width>40</width>
+                <width>50</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -798,9 +823,15 @@
             </item>
             <item>
              <widget class="QRadioButton" name="radioButton_print3">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
-                <width>40</width>
+                <width>50</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -811,9 +842,15 @@
             </item>
             <item>
              <widget class="QRadioButton" name="radioButton_print4">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
-                <width>40</width>
+                <width>50</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -824,9 +861,15 @@
             </item>
             <item>
              <widget class="QRadioButton" name="radioButton_print5">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
-                <width>40</width>
+                <width>50</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -837,9 +880,15 @@
             </item>
             <item>
              <widget class="QRadioButton" name="radioButton_print6">
+              <property name="minimumSize">
+               <size>
+                <width>50</width>
+                <height>0</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
-                <width>40</width>
+                <width>50</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -950,6 +999,121 @@
             <height>16777215</height>
            </size>
           </property>
+          <row>
+           <property name="text">
+            <string>1</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>2</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>3</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>4</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>5</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>6</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>7</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>8</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>9</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>10</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>11</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>12</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>13</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>14</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>15</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>16</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>17</string>
+           </property>
+          </row>
+          <row>
+           <property name="text">
+            <string>18</string>
+           </property>
+          </row>
+          <column>
+           <property name="text">
+            <string>No.</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Footshape Name</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Color</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Mark</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Size</string>
+           </property>
+          </column>
          </widget>
         </item>
         <item>
@@ -1419,8 +1583,12 @@
     <property name="title">
      <string>FILE</string>
     </property>
+    <addaction name="actionView_logfile"/>
     <addaction name="actionClear"/>
     <addaction name="actionClose"/>
+    <addaction name="actionDark_Theme"/>
+    <addaction name="actionWhite_Theme"/>
+    <addaction name="actionDefault_Theme"/>
    </widget>
    <addaction name="menuFILE"/>
   </widget>
@@ -1430,7 +1598,7 @@
     <string>Close</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+C</string>
+    <string>Ctrl+Q</string>
    </property>
   </action>
   <action name="actionClear">
@@ -1441,7 +1609,39 @@
     <string>Clear all data</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Q</string>
+    <string>Ctrl+R</string>
+   </property>
+  </action>
+  <action name="actionView_logfile">
+   <property name="text">
+    <string>View logfile</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
+  </action>
+  <action name="actionDark_Theme">
+   <property name="text">
+    <string>Dark Theme</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+D</string>
+   </property>
+  </action>
+  <action name="actionWhite_Theme">
+   <property name="text">
+    <string>White Theme</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+W</string>
+   </property>
+  </action>
+  <action name="actionDefault_Theme">
+   <property name="text">
+    <string>Default Theme</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+G</string>
    </property>
   </action>
  </widget>
