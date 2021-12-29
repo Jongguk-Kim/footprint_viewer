@@ -1192,23 +1192,43 @@ def getNode_2dMesh(meshfile):
     return np.array(NODE)
 
 @timer 
-def makeDatFile_ODB(npn, pv, npp, filename): 
+def makeDatFile_ODB(npn, pv, npp, filename, direction='X+'): 
     fp = open(filename, 'w')
+
+    if "X" in direction: 
+        dx = 2; dy=3;  dz = 1 
+    elif 'Z' in direction: 
+        dx = 2; dy = 1; dz = 3
 
     fp.write("*NODE\n")
     for i, n in enumerate(npn): 
-        fp.write("%10d, %12.6f, %12.6f, %12.6f, %12.6f, 0.0\n"%(n[0], n[3], n[2], n[1], pv[i]))
+        fp.write("%10d, %12.6f, %12.6f, %12.6f, %12.6f, 0.0\n"%(n[0], n[dy], n[2], n[dz], pv[i]))
 
-    dx = 2; dy=3
+    if len(npp) > 100000: 
+        # fp.write("** %s\n"%(npp[0]))
+        tpp =[]
+        for i, n in enumerate(npn): 
+            ix=np.where(npp[:,2] == n[0])[0]
+            for x in ix: 
+                tpp.append(npp[x])
+    
+        npp = np.array(tpp)
+
+        # fp.write("** %s\n"%(npp[0]))
+
+    # fp.write("** NO. of element %d\n"%(len(npp)))
     fp.write("*ELEMENT\n")
     for pp in npp: 
         ix1 = np.where(npp[:,0]==pp[0])[0]
         ix = np.where(npn[:,0] == npp[ix1[0]][2])[0]
         if not len(ix): 
             continue 
-        
-        itx = npp[ix1][1]
-        # itx = itx[:,1]
+
+        if len(npp[ix1]) > 1: 
+            itx = npp[ix1][1]
+        else: 
+            continue 
+
         itx_unique = np.unique(itx)
         if len(itx_unique) <3: 
             continue 

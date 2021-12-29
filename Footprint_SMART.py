@@ -16,7 +16,7 @@ V2021.1.01
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSlot, Qt
+from PyQt5.QtCore import  Qt
 from PyQt5.QtGui import QPalette, QColor
 
 from os.path import isfile 
@@ -890,10 +890,13 @@ class Ui_MainWindow(object):
         except: 
             print ("## no version history file!!")
     
-    def initialze(self): 
+    def initialze(self, MainWindow): 
         self.setTable()
         for i in range(self.rows): 
             self.tableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(self.lineEdit_pointSize.text()))
+
+        # MainWindow.setWindowFlags(Qt.FramelessWindowHint)
+        
         
         self.actions()
         self.initial_variables()
@@ -903,13 +906,13 @@ class Ui_MainWindow(object):
 
         self.lineEdit_jobFile.setText("")
 
-        self._stdout = StdoutRedirect()
-        self._stdout.start()
-        self._stdout.printOccur.connect(lambda x : self._append_text(x))
+        # self._stdout = StdoutRedirect()
+        # self._stdout.start()
+        # self._stdout.printOccur.connect(lambda x : self._append_text(x))
 
-        self._stdoutText = StdoutRedirectText()
-        self._stdoutText.start()
-        self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
+        # self._stdoutText = StdoutRedirectText()
+        # self._stdoutText.start()
+        # self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
 
     def actions(self): 
         self.radio_Single.clicked.connect(self.jobStatus)
@@ -1083,7 +1086,7 @@ class Ui_MainWindow(object):
             return False  
             
 
-        fname = makingFullFilePath_linux(wd, name)
+        # fname = makingFullFilePath_linux(wd, name)
 
     def checkInput_ISLM(self, lst_strings): 
         for string in lst_strings: 
@@ -1142,9 +1145,9 @@ class Ui_MainWindow(object):
                 with open('filename_path') as F: 
                     path = F.readlines()
                 
-                self.lineEdit_patternMesh.setText(path[0].strip()+"/"+path[1].strip()+", CONT, 3")
+                self.lineEdit_patternMesh.setText(path[0].strip()+"/"+path[1].strip()+", surf=CONT, step=3, direction=x+")
             except: 
-                self.lineEdit_patternMesh.setText(", CONT, 3")
+                self.lineEdit_patternMesh.setText(", surf=CONT, step=3, direction=x+")
             # fp = open('filename_path', 'w')
             # fp.close()
 
@@ -1259,6 +1262,7 @@ class Ui_MainWindow(object):
         self.localODB = 'remote.odb'
         self.localODB_dat = 'dat_ODB.dat'
         self.localsns = 'localSNS.sns'
+        self.localAbaqusInp = 'localAbqInp.inp'
 
         self.localISLMCaliPoints = 'localISLMCaliPoints.dat'
         self.localISLMCaliFPC = "ISLM_FPC_Cali.txt"
@@ -1568,6 +1572,8 @@ class Ui_MainWindow(object):
         if isfile( self.localODB):  remove(self.localODB)
         if isfile(self.localODB_CPress):  remove(self.localODB_CPress)
         if isfile(self.localODB_dat): remove(self.localODB_dat)
+        if isfile(self.localAbaqusInp): remove(self.localAbaqusInp)
+        if isfile('abaqus.rpy'): remove('abaqus.rpy')
 
         
 
@@ -1893,6 +1899,8 @@ class Ui_MainWindow(object):
                     self.filename.setText( "* FILE ERROR" )
                     self.fn -= 1
                     return 
+
+            footprintName = jobFile.split("/")[-1]
                 
 
         self.writeSetting()
@@ -1978,6 +1986,7 @@ class Ui_MainWindow(object):
             elif '.odb' in jobFile: 
                 self.foots[self.fn].sfric = False 
                 self.lineEdit_jobFile.setText(jobFile.split("/")[-1]) 
+                footprintName = jobFile.split("/")[-1]
 
                 try: 
                     self.foots[self.fn].nodes, self.foots[self.fn].surfaces, self.foots[self.fn].offset, \
@@ -2008,6 +2017,7 @@ class Ui_MainWindow(object):
             elif '.sfric' in  jobFile:
                 ptnmesh = None 
                 self.lineEdit_jobFile.setText(jobFile.split("/")[-1])
+                footprintName = jobFile.split("/")[-1]
                 if self.connectionStatus: 
                     self.smart = makingFullFilePath_linux(workingDirectory, simulationID+".inp")
                     jobFile = self.localSfricResult
@@ -2919,40 +2929,66 @@ class Ui_MainWindow(object):
                 print("*THERE IS NO FILE %s"%(odb))
                 return 0
             
+            # for dirs in dirList: 
+            #     if dirs == odb[:-3]+"inp": 
+            #         self.sftp.get(root+"/"+odb[:-3]+"inp", self.localAbaqusInp)
+            #         print("Downloading file %s"%(root+"/"+odb[:-3]+"inp"))
+            #         break 
+            # else: 
+            #     print("*THERE IS NO FILE %s"%(odb))
+            #     return 0
+            
         # self.filename.setText("Extracting footprint data")
         print("Extracting footprint data")
         print (' > %s'%(odb))
         cont = 'CONT'
         step = 3 
-
+        direction = 'X+'
         dta = self.lineEdit_patternMesh.text().split(",")
 
-        if len(dta) ==3: 
-            if "" != dta[0] or "mesh/ptn" in dta[0]: 
-                inp = dta[0].strip()
-            if "" != dta[1] or 'Contact Surface' in dta[1]: 
-                cont = dta[1].strip()
-            if "" != dta[2] or 'STEP No.' in dta[2]: 
-                try: 
-                    step =  int(dta[2].strip())
-                except: 
-                    step = 3
-        elif 'Mesh 2D or Pattern Mesh' in dta: 
-            self.lineEdit_patternMesh.setText(", CONT, 3")
-        else: 
-            self.lineEdit_patternMesh.setText(", CONT, 3")
+        isSurf = False; isStep = False; isDir = False 
+        for i, dt in enumerate(dta): 
+            d = dt.split("=")
+            if len(d) >1 : 
+                if 'surf' in d[0].lower(): 
+                    cont = d[1].strip() 
+                    isSurf = True 
+                if 'step' in d[0].lower(): 
+                    step =  int(d[1].strip())
+                    isStep = True 
+                if 'direction' in d[0].lower(): 
+                    direction = d[1].strip().upper()
+                    isDir = True 
+            else: 
+                if i ==0: 
+                    cont = dt.strip() 
+                    isSurf = True 
+                if i ==1: 
+                    step =  int(dt.strip())
+                    isStep = True
+                if i == 2: 
+                    direction = dt.strip().upper()
+                    isDir = True 
+
+        if not isSurf or not isStep or not isDir: 
+            self.lineEdit_patternMesh.setText(", surf=%s, step=%d, direction=%s"%(cont, step, direction))
+
 
         print ("Surface Name for Contacting : %s"%(cont))
         print ("Step to Load: %s"%(step))
+        print ("Direction to contact : %s"%(direction))
 
         w = open('abq', 'w')
         w.write("%s\n"%(cont))
         w.write("%s\n"%(step))
+        w.write("%s\n"%(direction))
         if isfile(self.localODB): 
             w.write("%s\n"%(self.localODB))
         else: 
             w.write("%s\n"%(odb))
         w.close()
+
+        self.filename.setText("Reading ABAQUS result")
 
         system('abaqus viewer noGUI=abaqus_footprint.py')
 
@@ -2964,14 +3000,21 @@ class Ui_MainWindow(object):
         else: 
             self.filename.setText("CPRESS was not extracted!!")
             return 
-        nodeStart = False 
+        nodeStart = False; displacement=False
         nodes =[]
-        for line in lines: 
+        for i, line in enumerate(lines): 
             if '----------------------------------------' in line: 
-                nodeStart=True 
-                continue 
-            if 'Minimum' in line: 
+                if "Node Label" in lines[i-2] and ("COORD.Magnitude " in lines[i-2] or 'U.Magnitude' in lines[i-2]): 
+                    nodeStart=True 
+                    if 'U.Magnitude' in lines[i-2]: displacement=True 
+                    continue 
+                if "Element Label" in lines[i-2] and "CPRESS" in lines[i-2]: 
+                    nodeStart = False 
+                    continue 
+
+            if 'Minimum' in line and nodeStart: 
                 nodeStart = False 
+                
             if nodeStart: 
                 wd = line.strip().split(" ")
                 cnt = 0 
@@ -2984,6 +3027,7 @@ class Ui_MainWindow(object):
                 if len(tmp) ==4:  
                     nodes.append(tmp)
         npn = np.array(nodes)
+        
 
         pressStart = False 
         press =[]
@@ -3003,32 +3047,87 @@ class Ui_MainWindow(object):
                 precount = 0 
                 pressStart = False 
             if pressStart  : 
-                
                 wd = line.strip().split(" ")
                 tmp = []
                 for w in wd: 
                     if not '' == w: 
-                        tmp.append(float(w.strip()))
+                        try: 
+                            tmp.append(float(w.strip()))
+                        except: 
+                            print (line)
+                            print(wd)
+                            exit()
                 if len(tmp) > 2: 
                     press.append(tmp)
         npp = np.array(press)
 
+
         if not len(npn): 
             return False 
-        zmax = np.max(npn[:,1])
-        ix = np.where(npn[:,1]>zmax-0.001)[0]
-        dnpn = npn[ix]
+
         
+
+        if displacement: 
+            print(" DYNAMIC ANALYSIS *****************")
+            with open('original_coordinates.tmp') as T: 
+                lines = T.readlines()
+            disp =[]
+            for line in lines: 
+                wd = line.split(",")
+                disp.append([ int(wd[0].strip()), float(wd[1].strip()), float(wd[2].strip()), float(wd[3].strip())           ])
+            print (" Read Displacement file.")
+
+            disp = np.array(disp)
+
+            noids = npp[:,2]
+            noids = np.unique(noids)
+
+            for i, n in enumerate(noids): 
+                ix = np.where(disp[:,0] == n)[0]
+                jx = np.where(npn[:,0] == n)[0]
+                if not len(jx) or not len(ix): continue 
+                
+                npn[jx[0]][1] += disp[ix[0]][1]
+                npn[jx[0]][2] += disp[ix[0]][2]
+                npn[jx[0]][3] += disp[ix[0]][3]
+
+            print (" Deformed Coordinates done.")
+
+        contactNodeGauge= 0.001
+        if 'X+' in direction or 'Z+' in direction: 
+            if 'X' in direction:  x = 1 
+            else: x = 3 
+            zmax = np.max(npn[:,x])
+            ix = np.where(npn[:,x]>zmax-contactNodeGauge)[0]
+
+        elif 'X-' in direction or 'Z-' in direction: 
+            if 'X' in direction:  x = 1 
+            else: x = 3 
+            zmin = np.min(npn[:,x])
+            ix = np.where(npn[:,x]<zmin+contactNodeGauge)[0]
+
+        dnpn = npn[ix]
+
         ps = []
         for n in dnpn: 
             ix = np.where(npp[:,2]==n[0])[0]
-            ps.append(npp[ix[0]][3])
-
-        ps = np.array(ps)    
-        makeDatFile_ODB(dnpn, ps, npp, self.localODB_dat)
+            if len(ix): 
+                ps.append(npp[ix[0]][3])
+            else: 
+                ps.append(0.0)
+                # print("n", n)
+        ps = np.array(ps)  
 
         
-        if isfile('abaqus.rpy'): remove('abaqus.rpy')
+        if np.max(ps) < 10.0: 
+            print (" Not CONTACTED!!")
+            self.filename.setText(" Not CONTACTED!!")
+            return False  
+
+        print ("Organizing footprint")
+        makeDatFile_ODB(dnpn, ps, npp, self.localODB_dat, direction=direction)
+        print ("Generating footprint")
+        
 
         return True 
     def jobStatus(self): 
@@ -3114,6 +3213,7 @@ class Ui_MainWindow(object):
             fp.write("wd=%s\n"%(self.lineEdit_jobDir.text()))
             fp.write("wf=%s\n"%(self.lineEdit_jobFile.text()))
             fp.write("ms=%s\n"%(self.lineEdit_patternMesh.text()))
+            print (self.lineEdit_patternMesh.text())
             fp.write("sm=%s\n"%(self.lineEdit_smartFile.text()))
             if self.radio_PC.isChecked():  fp.write("grp=PCR\n")
             else: fp.write("grp=TBR\n")
@@ -3140,7 +3240,7 @@ class Ui_MainWindow(object):
             fp.write("simNum=1,2,3\n")
             fp.write("wd=Working Directory\n")
             fp.write("wf=Working File\n")
-            fp.write("ms=Mesh 2D or Pattern Mesh\n")
+            fp.write("ms=Mesh 2D or Pattern Mesh, ABQ: ,surf= , step= , direction=x+\n")
             fp.write("sm=Smart Input File\n")
             fp.write("grp=PCR\n")
             fp.write("val=press\n")
@@ -3193,7 +3293,7 @@ class Ui_MainWindow(object):
             if "wf=" in line: 
                 self.lineEdit_jobFile.setText(wd.strip())
             if "ms=" in line: 
-                self.lineEdit_patternMesh.setText(wd.strip())
+                self.lineEdit_patternMesh.setText(line[3:].strip())
             if "sm=" in line: 
                 self.lineEdit_smartFile.setText(wd.strip())
             if "grp=" in line: 
@@ -3522,7 +3622,7 @@ if __name__ == "__main__":
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
-    ui.initialze()
+    ui.initialze(MainWindow)
     # MainWindow.showMaximized()
     MainWindow.show()
 
