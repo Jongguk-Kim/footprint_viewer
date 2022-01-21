@@ -418,6 +418,36 @@ class myCanvas(FigureCanvas):
             plt.ylim(current_ylim[0], current_ylim[1])
             self.figure.canvas.draw_idle()
 
+    def addBoundaryOnTestFootshape(self, pts, legends=None, items=None, size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None): 
+        cnt = 0 
+        size *= 5
+        yrange = 0.001
+        distance = 0.1
+        position = 0 
+        vsx=[]; vsy=[]; vsv=[]
+        for i, pt, gv in zip(items, pts, grv): 
+            size = sizes[cnt]
+            if pt : 
+                self.ax.scatter(pt[0], pt[1], c=colors[cnt], s=size*3,   marker=marks[cnt], label=legends[cnt])
+                if len(gv): 
+                    mx = np.max(pt[0])
+                    for g in gv: ## g =[n1, n2, face, en, 0, N1, N2]  [sf[1], sf[2], 3, sf[0], 0, sf[5][2], sf[5][0]]
+                        xs =[]; ys =[]
+                        xs.append(g[5][2]); xs.append(g[6][2])
+                        ys.append(g[5][1]); ys.append(g[6][1])
+                        lx = abs(xs[1]-xs[0]); ly = abs(ys[1]-ys[0])
+                        if ly > lx: 
+                            if abs(xs[0]) < mx : 
+                                self.ax.plot(xs, ys, c=colors[cnt], linewidth=size*0.1, ls=':' )
+
+                if pressure: 
+                    vx, vy, vv = self.add_pressure(pressure[cnt], yrange=yrange, distance=distance, below=True, position=position, size=size, color=colors[cnt], scale=1, mark=marks[cnt], EA=EA)
+                    vsx.append(vx); vsy.append(vy); vsv.append(vv)
+
+            cnt += 1 
+
+        self.figure.canvas.draw()
+        
     def plotComparing(self, pts, legends=None, items=None, size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None): 
         self.figure.clear()
         self.ax = self.figure.add_subplot(111)
@@ -599,6 +629,60 @@ class myCanvas(FigureCanvas):
         self.ax.add_patch(polygon)
 
         return ptx, pty, ptv 
+
+    
+    def testFootImage(self,  xs=None, ys=None, pv=None, **args) :
+        vmin = 50000; vmax = 500000
+        size = 0.3 ; cmap = 'rainbow'
+        adding = None 
+        grid = False 
+        files = False
+        filter = True ## not islm data 
+        contour = False 
+        profile = False 
+        lateralShift=0
+        for key, value in args.items(): 
+            if key == 'vmin': vmin = value 
+            if key == 'vmax': vmax = value 
+            if key == 'size': size = value 
+            if key == 'cmap': cmap = value 
+            if key == 'adding': adding = value 
+            if key == 'grid' : grid = value 
+            if key == 'legends': files = value 
+            if key == 'filter': filter = value 
+            if key == 'contour': contour = value 
+            if key == 'profile': profile = value 
+            if key == 'lateralShift': lateralShift=value 
+
+        
+        self.figure.clear()
+        plt.clf()
+        self.ax = self.figure.add_subplot(111)
+
+        
+
+         
+        ix = np.where(pv>vmin)[0]
+        px = xs[ix] 
+        py = ys[ix]  
+        v = pv[ix]
+
+        # print ("Lateral width=%.3f, shift=%.3f"%(end - start, mxd))
+        # print ( " Start =%.3f, End=%.3f"%(start-mxd, end-mxd))
+
+        
+        plt.scatter(px, py, c=v, s=size, cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=None, linewidths=0.0)
+        # plt.savefig("testPlotting.png", dpi=100)
+        
+        plt.axis("on")
+        plt.axis("equal")
+        plt.tight_layout()
+        ## hovering is not functional #################################################################################
+        # self.sc = self.ax.scatter(px, py, c=v, s=size, cmap=cmap, vmin=vmin, vmax=vmax, edgecolors=None, linewidths=0.0)
+        # self.figure.canvas.mpl_connect("motion_notify_event", self.hover)
+         ###############################################################################################################
+        self.figure.canvas.mpl_connect('button_release_event', self.onReleased)
+        self.figure.canvas.draw()
 
     def Plotting(self, xs=None, ys=None, pv=None, **args) :
         ## points = plt.scatter(px, py, c=pv, s=size, cmap=cmap, vmin=vmin, vmax=vmin*10, edgecolors=None, linewidths=0.0 )

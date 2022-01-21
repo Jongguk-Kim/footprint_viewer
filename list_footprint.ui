@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1465</width>
+    <width>1159</width>
     <height>961</height>
    </rect>
   </property>
@@ -573,7 +573,7 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>35</height>
+              <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -592,7 +592,7 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>35</height>
+              <height>30</height>
              </size>
             </property>
             <property name="maximumSize">
@@ -1123,13 +1123,13 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>110</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1142,13 +1142,13 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>110</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1161,13 +1161,13 @@
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>110</width>
-              <height>35</height>
+              <height>25</height>
              </size>
             </property>
             <property name="text">
@@ -1226,7 +1226,7 @@
           <widget class="QRadioButton" name="radioLT">
            <property name="geometry">
             <rect>
-             <x>140</x>
+             <x>130</x>
              <y>7</y>
              <width>51</width>
              <height>17</height>
@@ -1237,6 +1237,51 @@
            </property>
           </widget>
          </widget>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_Indoor">
+          <item>
+           <widget class="QPushButton" name="pushButton_Indoor">
+            <property name="minimumSize">
+             <size>
+              <width>160</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>160</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Local file (*.csv)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="text">
+             <string>Load Indoor Test(raw)</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="pushButton_overlaping">
+            <property name="minimumSize">
+             <size>
+              <width>160</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>160</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Overlap ISLM Boudnary</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayou_min">
@@ -1575,7 +1620,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1465</width>
+     <width>1159</width>
      <height>21</height>
     </rect>
    </property>
@@ -1583,6 +1628,7 @@
     <property name="title">
      <string>FILE</string>
     </property>
+    <addaction name="actionTest_Footshape_Raw"/>
     <addaction name="actionView_logfile"/>
     <addaction name="actionClear"/>
     <addaction name="actionClose"/>
@@ -1642,6 +1688,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+G</string>
+   </property>
+  </action>
+  <action name="actionTest_Footshape_Raw">
+   <property name="text">
+    <string>Test_Footshape_Raw</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+T</string>
    </property>
   </action>
  </widget>

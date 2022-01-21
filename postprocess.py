@@ -9,6 +9,7 @@ from pattern import PATTERN
 import MeshViewer as cute  
 
 import time 
+
 def timer(func): 
     def wrapper(*args, **kwargs): 
         start = time.time()
@@ -1243,7 +1244,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     areanode.Combine(negnodeDown)
     areanode.Node = Delete_Close_Points(areanode.Node, point_gap, backward=True )
 
-    npx=[]; npy=[]
+    # npx=[]; npy=[]
 
     i = 1 
     PL=0 
@@ -1253,7 +1254,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
         
         if i>2 and L1 > PL * 2 and L1 > point_gap*2 and L2 > point_gap*2: 
             # print ("** del", areanode.Node[i])
-            npx.append(areanode.Node[i][2]); npy.append(areanode.Node[i][3]); 
+            # npx.append(areanode.Node[i][2]); npy.append(areanode.Node[i][3]); 
             del(areanode.Node[i]) 
             # continue 
         PL = L1 
@@ -1938,3 +1939,172 @@ def extract_profile_crown(fname):
 
     return [np.array(node.Node), edges.Edge]
     
+
+class inDoorFootprint(): 
+    def __init__(self, jobFile=None) :
+
+        with open(jobFile) as F: 
+            lines = F.readlines()
+        start = False 
+        xs=[]; ys=[]; vs=[]
+        for i, line in enumerate(lines): 
+            if not start: 
+                if "SIZE" in line.upper(): print(line.strip())
+                if "PATTERN" in line.upper() : print(line.strip())
+                if "INFL" in line.upper() : print(line.strip())
+                if "TEST" in line.upper() : print(line.strip())
+                if "SPEC. No." in line.upper(): print(line.strip())
+                
+
+            if "Camera Raw Data" in line:
+                start = True 
+                continue 
+            if start : 
+                dl = line.split(",")
+                
+                tl = []
+                cal = 0 
+                for j, d in enumerate(dl):
+                    v = float(d.strip())
+                    if j > 0:  
+                        if pv >= 10  and v >=10 : 
+                            ys.append(float(i))
+                            xs.append(float(j))
+                            vs.append(v)
+                        pv = v 
+                    else: 
+                        pv = v 
+
+        self.X = np.array(xs)
+        self.Y = np.array(ys)
+        self.P = np.array(vs)
+
+        ## scale :
+        #  신 장비의 경우 해상도 2020 * 2020 이며, 이미지의 크기는 500 mm * 500 mm
+        #  구 장비의 경우 해상도 480 * 640 이며, 이미지의 크기는 292 mm * 390 mm 
+        if len(lines) > 1000: 
+            xdots=2022; ydots=2022; xwidth=0.5; ywidth=0.5 
+        else: 
+            xdots=480; ydots=640; xwidth=0.292; ywidth=0.390
+        self.scaling( xdots=xdots, ydots=ydots, xWidth=xwidth, ywidth=ywidth )
+
+    def scaling(self, xdots=2022, ydots=2022, xWidth=0.5, ywidth=0.5): 
+        self.X /= xdots  / xWidth 
+        self.Y /= ydots  / ywidth
+
+    def positioning(self, value=40, add=0.01): 
+
+        jx = np.where(self.P > value)[0]
+
+        tx40 = self.X[jx] 
+        mi = np.min(tx40); mj = np.max(tx40) 
+
+        cx = mi; step = 1.0E-3
+
+        start = -100.0; end=100.0
+        minNumber = 100
+        while cx < mj: 
+
+            ix1 = np.where(tx40>cx)[0]
+            ix2 = np.where(tx40<cx+step)[0]
+            ix = np.intersect1d(ix1, ix2)
+            if len(ix) > minNumber and start ==-100.0:  
+                start = cx 
+                break 
+            cx += step 
+
+        cx = mj 
+        while cx > mi: 
+            ix1 = np.where(tx40<cx)[0]
+            ix2 = np.where(tx40>cx-step)[0]
+            ix = np.intersect1d(ix1, ix2)
+
+            if len(ix) > minNumber and end ==100.0:  
+                end = cx 
+                break 
+            cx -= step 
+        
+        mxd = (start+end)/2.0 
+
+
+
+        ix1 = np.where(self.X>=start-add)[0]
+        ix2 = np.where(self.X<=end+add)[0]
+        ix = np.intersect1d(ix1, ix2)
+        self.X = self.X[ix] - mxd 
+        self.Y = self.Y[ix]
+        self.P = self.P[ix]
+
+
+        jx = np.where(self.P > value)[0]
+        ty40 = self.Y[jx] 
+        mi = np.min(ty40); mj = np.max(ty40)
+        cy = mi; step = 1.0E-3
+
+        start = -100.0; end=100.0
+        # minNumber = 100
+        while cy < mj: 
+
+            ix1 = np.where(ty40>cy)[0]
+            ix2 = np.where(ty40<cy+step)[0]
+            ix = np.intersect1d(ix1, ix2)
+            if len(ix) > minNumber and start ==-100.0:  
+                start = cy 
+                break 
+            cy += step 
+
+        cy = mj 
+        while cy > mi: 
+            ix1 = np.where(ty40<cy)[0]
+            ix2 = np.where(ty40>cy-step)[0]
+            ix = np.intersect1d(ix1, ix2)
+
+            if len(ix) > minNumber and end ==100.0:  
+                end = cy 
+                break 
+            cy -= step 
+        
+
+        myd = (start+end)/2.0 
+        
+        ix1 = np.where(self.Y>=start-add)[0]
+        ix2 = np.where(self.Y<=end+add)[0]
+        ix = np.intersect1d(ix1, ix2)
+
+        self.Y = self.Y[ix] - myd 
+        self.X = self.X[ix]
+        self.P = self.P[ix]
+
+
+
+    def imageBoundary(self, gap=5): 
+        
+        N = len(self.P)
+        gP = np.average(self.P)*2/3
+        xs =[]; ys=[]; ps=[]
+        for i, _ in enumerate(self.P): 
+            if i < 100 or i > N -100: continue 
+            if self.P[i] > gP: continue 
+            if (self.P[i-1] - self.P[i]) > gap and (self.P[i-2] - self.P[i]) > gap: 
+                    xs.append(self.X[i])
+                    ys.append(self.Y[i])
+                    ps.append(self.P[i])
+                    continue 
+            if (self.P[i+1] - self.P[i]) > gap and (self.P[i+2] - self.P[i]) > gap: 
+                    xs.append(self.X[i])
+                    ys.append(self.Y[i])
+                    ps.append(self.P[i])
+                    continue 
+            if (self.P[i-1] - self.P[i]) > gap*2: 
+                    xs.append(self.X[i])
+                    ys.append(self.Y[i])
+                    ps.append(self.P[i])
+                    continue 
+
+        self.X = np.array(xs)
+        self.Y = np.array(ys)
+        self.P = np.array(ps)
+
+
+
+

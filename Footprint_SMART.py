@@ -29,7 +29,7 @@ from basicfunctions import  findout_offset, rotatePoints, combinationWords
 from smart import ResultSfric, SFRIC, lateralShift_fromSFRIC, readSMART_Inp
 from layout import readBodyLayout, LayoutMesh_From_axi, getNode_2dMesh, makeDatFile_ODB
 from postprocess import readDAT,  interpolation_footprint_pressure, \
-    contPress, FPC, SearchPoints, FOOTPRINT, calculatingActualArea, extract_profile_crown
+    contPress, FPC, SearchPoints, FOOTPRINT, calculatingActualArea, extract_profile_crown, inDoorFootprint
 from canvas_plotting import myCanvas 
 from files import makingFullFilePath_linux, simulationCodes
 
@@ -186,7 +186,7 @@ class Ui_MainWindow(object):
     
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1465, 961)
+        MainWindow.resize(1159, 961)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_9 = QtWidgets.QHBoxLayout(self.centralwidget)
@@ -339,12 +339,12 @@ class Ui_MainWindow(object):
         self.horizontalLayout_boundarybox_loading = QtWidgets.QHBoxLayout()
         self.horizontalLayout_boundarybox_loading.setObjectName("horizontalLayout_boundarybox_loading")
         self.pushButton_QuickLoad = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_QuickLoad.setMinimumSize(QtCore.QSize(0, 35))
+        self.pushButton_QuickLoad.setMinimumSize(QtCore.QSize(0, 30))
         self.pushButton_QuickLoad.setMaximumSize(QtCore.QSize(330, 30))
         self.pushButton_QuickLoad.setObjectName("pushButton_QuickLoad")
         self.horizontalLayout_boundarybox_loading.addWidget(self.pushButton_QuickLoad)
         self.pushButton_GeneratngFoot = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_GeneratngFoot.setMinimumSize(QtCore.QSize(0, 35))
+        self.pushButton_GeneratngFoot.setMinimumSize(QtCore.QSize(0, 30))
         self.pushButton_GeneratngFoot.setMaximumSize(QtCore.QSize(330, 30))
         self.pushButton_GeneratngFoot.setObjectName("pushButton_GeneratngFoot")
         self.horizontalLayout_boundarybox_loading.addWidget(self.pushButton_GeneratngFoot)
@@ -510,18 +510,18 @@ class Ui_MainWindow(object):
         self.horizontalLayout_redobox = QtWidgets.QHBoxLayout()
         self.horizontalLayout_redobox.setObjectName("horizontalLayout_redobox")
         self.pushButton_Redraw = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_Redraw.setMinimumSize(QtCore.QSize(0, 35))
-        self.pushButton_Redraw.setMaximumSize(QtCore.QSize(110, 35))
+        self.pushButton_Redraw.setMinimumSize(QtCore.QSize(0, 25))
+        self.pushButton_Redraw.setMaximumSize(QtCore.QSize(110, 25))
         self.pushButton_Redraw.setObjectName("pushButton_Redraw")
         self.horizontalLayout_redobox.addWidget(self.pushButton_Redraw)
         self.pushButton_Range = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_Range.setMinimumSize(QtCore.QSize(0, 35))
-        self.pushButton_Range.setMaximumSize(QtCore.QSize(110, 35))
+        self.pushButton_Range.setMinimumSize(QtCore.QSize(0, 25))
+        self.pushButton_Range.setMaximumSize(QtCore.QSize(110, 25))
         self.pushButton_Range.setObjectName("pushButton_Range")
         self.horizontalLayout_redobox.addWidget(self.pushButton_Range)
         self.pushButton_refreshAll = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_refreshAll.setMinimumSize(QtCore.QSize(0, 35))
-        self.pushButton_refreshAll.setMaximumSize(QtCore.QSize(110, 35))
+        self.pushButton_refreshAll.setMinimumSize(QtCore.QSize(0, 25))
+        self.pushButton_refreshAll.setMaximumSize(QtCore.QSize(110, 25))
         self.pushButton_refreshAll.setObjectName("pushButton_refreshAll")
         self.horizontalLayout_redobox.addWidget(self.pushButton_refreshAll)
         self.verticalLayout_menu.addLayout(self.horizontalLayout_redobox)
@@ -538,9 +538,22 @@ class Ui_MainWindow(object):
         self.radioTB.setGeometry(QtCore.QRect(240, 7, 51, 17))
         self.radioTB.setObjectName("radioTB")
         self.radioLT = QtWidgets.QRadioButton(self.group_TIRE)
-        self.radioLT.setGeometry(QtCore.QRect(140, 7, 51, 17))
+        self.radioLT.setGeometry(QtCore.QRect(130, 7, 51, 17))
         self.radioLT.setObjectName("radioLT")
         self.verticalLayout_menu.addWidget(self.group_TIRE)
+        self.horizontalLayout_Indoor = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_Indoor.setObjectName("horizontalLayout_Indoor")
+        self.pushButton_Indoor = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_Indoor.setMinimumSize(QtCore.QSize(160, 25))
+        self.pushButton_Indoor.setMaximumSize(QtCore.QSize(160, 25))
+        self.pushButton_Indoor.setObjectName("pushButton_Indoor")
+        self.horizontalLayout_Indoor.addWidget(self.pushButton_Indoor)
+        self.pushButton_overlaping = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_overlaping.setMinimumSize(QtCore.QSize(160, 25))
+        self.pushButton_overlaping.setMaximumSize(QtCore.QSize(160, 25))
+        self.pushButton_overlaping.setObjectName("pushButton_overlaping")
+        self.horizontalLayout_Indoor.addWidget(self.pushButton_overlaping)
+        self.verticalLayout_menu.addLayout(self.horizontalLayout_Indoor)
         self.horizontalLayou_min = QtWidgets.QHBoxLayout()
         self.horizontalLayou_min.setObjectName("horizontalLayou_min")
         self.label_min = QtWidgets.QLabel(self.centralwidget)
@@ -651,7 +664,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_9.addLayout(self.verticalLayout_board)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1465, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1159, 21))
         self.menubar.setObjectName("menubar")
         self.menuFILE = QtWidgets.QMenu(self.menubar)
         self.menuFILE.setObjectName("menuFILE")
@@ -671,6 +684,9 @@ class Ui_MainWindow(object):
         self.actionWhite_Theme.setObjectName("actionWhite_Theme")
         self.actionDefault_Theme = QtWidgets.QAction(MainWindow)
         self.actionDefault_Theme.setObjectName("actionDefault_Theme")
+        self.actionTest_Footshape_Raw = QtWidgets.QAction(MainWindow)
+        self.actionTest_Footshape_Raw.setObjectName("actionTest_Footshape_Raw")
+        self.menuFILE.addAction(self.actionTest_Footshape_Raw)
         self.menuFILE.addAction(self.actionView_logfile)
         self.menuFILE.addAction(self.actionClear)
         self.menuFILE.addAction(self.actionClose)
@@ -829,6 +845,9 @@ class Ui_MainWindow(object):
         self.radio_PC.setText(_translate("MainWindow", "PC"))
         self.radioTB.setText(_translate("MainWindow", "TB"))
         self.radioLT.setText(_translate("MainWindow", "LT"))
+        self.pushButton_Indoor.setToolTip(_translate("MainWindow", "<html><head/><body><p>Local file (*.csv)</p></body></html>"))
+        self.pushButton_Indoor.setText(_translate("MainWindow", "Load Indoor Test(raw)"))
+        self.pushButton_overlaping.setText(_translate("MainWindow", "Overlap ISLM Boudnary"))
         self.label_min.setText(_translate("MainWindow", "Minimum"))
         self.lineEdit_min_colorRange.setText(_translate("MainWindow", "50000"))
         self.label_max.setText(_translate("MainWindow", "Maximum"))
@@ -861,6 +880,8 @@ class Ui_MainWindow(object):
         self.actionWhite_Theme.setShortcut(_translate("MainWindow", "Ctrl+Shift+W"))
         self.actionDefault_Theme.setText(_translate("MainWindow", "Default Theme"))
         self.actionDefault_Theme.setShortcut(_translate("MainWindow", "Ctrl+Shift+G"))
+        self.actionTest_Footshape_Raw.setText(_translate("MainWindow", "Test_Footshape_Raw"))
+        self.actionTest_Footshape_Raw.setShortcut(_translate("MainWindow", "Ctrl+Shift+T"))
 
 
     def checkTheme(self): 
@@ -906,13 +927,13 @@ class Ui_MainWindow(object):
 
         self.lineEdit_jobFile.setText("")
 
-        # self._stdout = StdoutRedirect()
-        # self._stdout.start()
-        # self._stdout.printOccur.connect(lambda x : self._append_text(x))
+        self._stdout = StdoutRedirect()
+        self._stdout.start()
+        self._stdout.printOccur.connect(lambda x : self._append_text(x))
 
-        # self._stdoutText = StdoutRedirectText()
-        # self._stdoutText.start()
-        # self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
+        self._stdoutText = StdoutRedirectText()
+        self._stdoutText.start()
+        self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
 
     def actions(self): 
         self.radio_Single.clicked.connect(self.jobStatus)
@@ -927,6 +948,10 @@ class Ui_MainWindow(object):
         self.push_Rotating.clicked.connect(self.reCalculatingFPC)
         self.push_lateralShift.clicked.connect(self.reCalculatingFPC)
         self.pushButton_Range.clicked.connect(self.reCalculatingFPC)
+        self.pushButton_refreshAll.clicked.connect(self.addBoundary_onTestFootprint)
+        self.pushButton_overlaping.clicked.connect(self.addBoundary_onTestFootprint)
+        self.pushButton_Indoor.clicked.connect(self.readTestResultSCV)
+        
 
         self.lineEdit_DOE_ID.editingFinished.connect(self.writeSettingValueChange)
         self.lineEdit_0_Location.editingFinished.connect(self.writeSettingValueChange)
@@ -993,6 +1018,7 @@ class Ui_MainWindow(object):
         self.actionDark_Theme.triggered.connect(self.darkTheme)
         self.actionWhite_Theme.triggered.connect(self.whiteTheme)
         self.actionDefault_Theme.triggered.connect(self.defaultTheme)
+        self.actionTest_Footshape_Raw.triggered.connect(self.readTestResultSCV)
 
     def setTable(self): 
         self.columns= 5
@@ -1298,6 +1324,8 @@ class Ui_MainWindow(object):
         self.default_user = False 
 
         self.theme = 'none' 
+        self.testImage = False 
+        self.indoor = None
 
         # self.lineEdit_jobFile.setPlaceholderText("Ctrl+R : Erase all the footprints, Ctrl+Q : Exit program")
         # self.lineEdit_jobFile.setFocus()
@@ -1461,10 +1489,53 @@ class Ui_MainWindow(object):
                 print(EX, "Connection Error.") 
                 pass 
 
-    
+    def addBoundaryOnTest(self): 
+        
+        if not isinstance(self.indoor, type(None)): 
+
+            boundaries =[]
+            grooves =[]
+            files =[]
+            items = []
+            pressures =[]
+            colors = []; marks=[]; sizes=[]
+
+            for i in range(self.fn+1): 
+                if self.chbox[i].isChecked(): 
+                    if not self.foots[i].ISLM_boundary_Init : 
+                            boundaries.append(self.foots[i].boundary)
+                    elif self.radio_ISLM_org.isChecked() and self.foots[i].ISLM_boundary_Init: 
+                        boundaries.append(self.foots[i].ISLM_boundary_Init)
+
+                    elif self.radio_ISLM_cali.isChecked() and self.foots[i].ISLM_caliboundary_Init : 
+                        boundaries.append(self.foots[i].ISLM_caliboundary_Init)
+                    elif  self.radio_ISLM_cali.isChecked() and not self.foots[i].ISLM_caliboundary_Init :
+                        boundaries.append(self.foots[i].ISLM_boundary_Init)
+                    else: 
+                        if len(self.foots[i].boundary): 
+                            boundaries.append(self.foots[i].boundary)
+                        else: 
+                            self.chbox[i].setChecked(False)
+                            continue 
+
+                    grooves.append(self.foots[i].edge_groove)
+                    name = self.foots[i].workingfile.split("/")[-1]
+                    if name[-12:] == 'postfoot.dat': name = name[:-13]
+                    files.append(name)
+                    items.append(i)
+                    colors.append(self.combo_color[i].currentText())
+                    marks.append(self.combo_mark[i].currentText())
+                    sizes.append(float(self.tableWidget.item(i, 4).text().strip()))
+
+            self.drawTestImage()
+
+            self.figure.addBoundaryOnTestFootshape(boundaries, legends=files, 
+                        items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures, 
+                        colors=colors, marks=marks, sizes=sizes)
+
+        
     def addComparingBoundary_check(self):
-        if self.boundaryplotting : 
-            
+        if self.boundaryplotting and not self.testImage: 
             boundaries =[]
             grooves =[]
             files =[]
@@ -1605,9 +1676,16 @@ class Ui_MainWindow(object):
     ## show images  
     ################################################
 
-    def quickload(self): 
+    def quickload(self):
+        self.testImage = False
+        if int(self.lineEdit_PointsDensity.text().strip()) > 50: 
+            self.lineEdit_PointsDensity.setText("15")
+          
         self.loadImage(quick=True)
     def reloadImage(self): 
+        if int(self.lineEdit_PointsDensity.text().strip()) > 50 and isinstance(self.indoor, type(None)): 
+            self.lineEdit_PointsDensity.setText("15")
+
         self.loadImage(quick=False)
     def loadImage(self, quick=False):
         
@@ -1721,43 +1799,53 @@ class Ui_MainWindow(object):
         if N_start == self.fn: 
             self.filename.setText("No image is loaded!")
 
-    def redrawing(self): 
-        if self.fn <0 :   return 
+    def redrawing(self):
+        if int(self.lineEdit_PointsDensity.text().strip()) > 50 and isinstance(self.indoor, type(None)): 
+            self.lineEdit_PointsDensity.setText("15")
+        
+        if not self.testImage : 
+            if self.fn <0 :   return 
 
-        if self.checkBox_grid.isChecked(): 
-            # self.displayAllprints()
-            self.filename.setText("Cannot be changed the image in grid view")
-            return 
-        if self.boundaryplotting: 
-            # self.addComparingBoundary()
-            self.filename.setText("Cannot be changed the image in comparing view")
-            return
+            if self.checkBox_grid.isChecked(): 
+                # self.displayAllprints()
+                self.filename.setText("Cannot be changed the image in grid view")
+                return 
+            if self.boundaryplotting: 
+                # self.addComparingBoundary()
+                self.filename.setText("Cannot be changed the image in comparing view")
+                return
 
-        fn = self.currentFootprintNumber()
+            fn = self.currentFootprintNumber()
 
-        self.vmin = float(self.lineEdit_min_colorRange.text())
-        self.vmax = float(self.lineEdit_max_colorRange.text())
-        self.size = float(self.lineEdit_pointSize.text())
+            self.vmin = float(self.lineEdit_min_colorRange.text())
+            self.vmax = float(self.lineEdit_max_colorRange.text())
+            self.size = float(self.lineEdit_pointSize.text())
 
-        if self.foots[fn].ISLM and not self.radio_calculation.isChecked() :
-            idx = np.where(self.foots[fn].ISLM_contourV>=self.foots[fn].vmin)[0]
-            self.figure.Plotting(self.foots[fn].ISLM_contourX[idx], self.foots[fn].ISLM_contourY[idx],\
-                     self.foots[fn].ISLM_contourV[idx], vmin=self.vmin, vmax=self.vmax, \
-                         size=self.size, contour=True)
+            if self.foots[fn].ISLM and not self.radio_calculation.isChecked() :
+                idx = np.where(self.foots[fn].ISLM_contourV>=self.foots[fn].vmin)[0]
+                self.figure.Plotting(self.foots[fn].ISLM_contourX[idx], self.foots[fn].ISLM_contourY[idx],\
+                        self.foots[fn].ISLM_contourV[idx], vmin=self.vmin, vmax=self.vmax, \
+                            size=self.size, contour=True)
+            else: 
+                self.angle = float(self.lineEdit_rotating.text())
+                self.lateralShift = float(self.lineEdit_lateralShift.text())/1000.0
+
+                self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs = \
+                        self.rePosition(self.foots[fn], vmin=self.vmin, angle=self.angle, shift=self.lateralShift)
+                self.figure.Plotting(self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs, vmin=self.vmin, vmax=self.vmax, size=self.size)
+
+
+            self.check_showFittingPoints.setChecked(False)
         else: 
-            self.angle = float(self.lineEdit_rotating.text())
-            self.lateralShift = float(self.lineEdit_lateralShift.text())/1000.0
-
-            self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs = \
-                    self.rePosition(self.foots[fn], vmin=self.vmin, angle=self.angle, shift=self.lateralShift)
-            self.figure.Plotting(self.foots[fn].xs, self.foots[fn].ys, self.foots[fn].vs, vmin=self.vmin, vmax=self.vmax, size=self.size)
-
-
-        self.check_showFittingPoints.setChecked(False)
+            self.indoorMin = self.lineEdit_min_colorRange.text()
+            self.indoorMax = self.lineEdit_max_colorRange.text()
+            self.drawTestImage()
 
         self.filename.setText("Image was refreshed")
 
     def viewRefPoints(self): 
+        self.testImage = False
+
         self.checkBox_grid.setChecked(False)
         fn = self.currentFootprintNumber()
 
@@ -1786,6 +1874,8 @@ class Ui_MainWindow(object):
                 pass 
     
     def addComparingBoundary(self):
+        self.testImage = False
+
         self.boundaryplotting = True 
         self.plottingStatus(boundary=self.boundaryplotting)
         self.addComparingBoundary_check()  ## plotting 
@@ -2250,6 +2340,9 @@ class Ui_MainWindow(object):
         
         self.tableWidget.setItem(self.fn, 1, QtWidgets.QTableWidgetItem(footprintName))
         
+    def addBoundary_onTestFootprint(self): 
+        if self.testImage: 
+            self.addBoundaryOnTest()
 
     def reCalculatingFPC(self, fn=None ):
 
@@ -2340,7 +2433,8 @@ class Ui_MainWindow(object):
 
         self.printFPC(add=saveText)
 
-    def changeFootprint(self): 
+    def changeFootprint(self):
+
         self.checkBox_grid.setChecked(False) ## uncheck the grid view check box 
         fn = self.currentFootprintNumber()
 
@@ -2431,7 +2525,9 @@ class Ui_MainWindow(object):
 
             if len(self.foots[fn].vs): 
                 self.filename.setText("Max Press. %.3fMPa, Mid=%.3fMPa, Min=%.3fMPa"%(np.max(self.foots[fn].vs)/10**6, np.median(self.foots[fn].vs)/10**6, np.min(self.foots[fn].vs)/10**6))
-            
+
+        
+    
         self.lineEdit_PointsDensity.setText(str(self.foots[fn].density))
         self.lineEdit_rotating.setText(str(self.foots[fn].angle))
         self.lineEdit_lateralShift.setText(str(self.foots[fn].lateralShift*1000))
@@ -2448,6 +2544,7 @@ class Ui_MainWindow(object):
             self.viewRefPoints()
 
     def displayAllprints(self): 
+
         if self.checkBox_grid.isChecked(): 
             printsX =[]; printsY=[]; printsV=[]
             files =[]
@@ -2512,6 +2609,47 @@ class Ui_MainWindow(object):
             self.changeFootprint()
         self.printFPC()
 
+    def readTestResultSCV(self): 
+        jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.csv)")
+        if jobFile: 
+            self.cwd = getCWD(jobFile)
+            self.writeSetting()
+
+            self.indoor = inDoorFootprint(jobFile)
+            self.indoor.positioning(value=40, add=15.0E-3)
+            # self.indoor.imageBoundary()
+
+            self.lineEdit_min_colorRange.setText("20")
+            self.lineEdit_max_colorRange.setText("80")
+            self.lineEdit_PointsDensity.setEnabled(True)
+            
+            self.drawTestImage()
+            self.indoorMin = self.lineEdit_min_colorRange.text()
+            self.indoorMax = self.lineEdit_max_colorRange.text()
+            
+            
+
+    def drawTestImage(self): 
+        size = float(self.lineEdit_pointSize.text().strip())
+        
+        vmin = float(self.lineEdit_min_colorRange.text().strip())
+        vmax = float(self.lineEdit_max_colorRange.text().strip())
+        if vmin > 1000: 
+            self.lineEdit_min_colorRange.setText(self.indoorMin )
+            self.lineEdit_max_colorRange.setText(self.indoorMax )
+            vmin = float(self.lineEdit_min_colorRange.text().strip())
+            vmax = float(self.lineEdit_max_colorRange.text().strip())
+        
+        if vmin > vmax: 
+            vmax = vmin*2 
+            self.lineEdit_max_colorRange.setText(str(vmax )) 
+            self.indoorMax = self.lineEdit_max_colorRange.text()
+
+        self.figure.testFootImage(self.indoor.X, self.indoor.Y,\
+                self.indoor.P, vmin=vmin, vmax=vmax,\
+                    size=size, contour=True)
+        self.testImage = True 
+            
 
     def footprint_with_profile(self): 
         pass 
@@ -2624,7 +2762,7 @@ class Ui_MainWindow(object):
         return xs, ys, pv 
 
     def calculatingFPC(self, foot): 
-        
+
         areapoints, basicFPC, advFPC, FPCLines \
             = FPC(foot.xs, foot.ys, foot.vs, cp=foot.centerPress, \
                 vmin=self.vmin, vmax=self.vmax, ActualArea=foot.actualArea, fitting=int(self.lineEdit_fittingOrder.text()))
@@ -3213,7 +3351,7 @@ class Ui_MainWindow(object):
             fp.write("wd=%s\n"%(self.lineEdit_jobDir.text()))
             fp.write("wf=%s\n"%(self.lineEdit_jobFile.text()))
             fp.write("ms=%s\n"%(self.lineEdit_patternMesh.text()))
-            print (self.lineEdit_patternMesh.text())
+            # print (self.lineEdit_patternMesh.text())
             fp.write("sm=%s\n"%(self.lineEdit_smartFile.text()))
             if self.radio_PC.isChecked():  fp.write("grp=PCR\n")
             else: fp.write("grp=TBR\n")
