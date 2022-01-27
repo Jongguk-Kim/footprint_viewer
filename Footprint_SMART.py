@@ -544,15 +544,28 @@ class Ui_MainWindow(object):
         self.horizontalLayout_Indoor = QtWidgets.QHBoxLayout()
         self.horizontalLayout_Indoor.setObjectName("horizontalLayout_Indoor")
         self.pushButton_Indoor = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_Indoor.setMinimumSize(QtCore.QSize(160, 25))
-        self.pushButton_Indoor.setMaximumSize(QtCore.QSize(160, 25))
+        self.pushButton_Indoor.setMinimumSize(QtCore.QSize(80, 25))
+        self.pushButton_Indoor.setMaximumSize(QtCore.QSize(90, 25))
         self.pushButton_Indoor.setObjectName("pushButton_Indoor")
         self.horizontalLayout_Indoor.addWidget(self.pushButton_Indoor)
         self.pushButton_overlaping = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton_overlaping.setMinimumSize(QtCore.QSize(160, 25))
-        self.pushButton_overlaping.setMaximumSize(QtCore.QSize(160, 25))
+        self.pushButton_overlaping.setMinimumSize(QtCore.QSize(100, 25))
+        self.pushButton_overlaping.setMaximumSize(QtCore.QSize(90, 25))
         self.pushButton_overlaping.setObjectName("pushButton_overlaping")
         self.horizontalLayout_Indoor.addWidget(self.pushButton_overlaping)
+        self.label_imageScale = QtWidgets.QLabel(self.centralwidget)
+        self.label_imageScale.setMaximumSize(QtCore.QSize(40, 25))
+        self.label_imageScale.setObjectName("label_imageScale")
+        self.horizontalLayout_Indoor.addWidget(self.label_imageScale)
+        self.lineEdit_imageScale = QtWidgets.QLineEdit(self.centralwidget)
+        self.lineEdit_imageScale.setMaximumSize(QtCore.QSize(30, 20))
+        self.lineEdit_imageScale.setAlignment(QtCore.Qt.AlignCenter)
+        self.lineEdit_imageScale.setObjectName("lineEdit_imageScale")
+        self.horizontalLayout_Indoor.addWidget(self.lineEdit_imageScale)
+        self.pushButton_imageRotate = QtWidgets.QPushButton(self.centralwidget)
+        self.pushButton_imageRotate.setMaximumSize(QtCore.QSize(50, 25))
+        self.pushButton_imageRotate.setObjectName("pushButton_imageRotate")
+        self.horizontalLayout_Indoor.addWidget(self.pushButton_imageRotate)
         self.verticalLayout_menu.addLayout(self.horizontalLayout_Indoor)
         self.horizontalLayou_min = QtWidgets.QHBoxLayout()
         self.horizontalLayou_min.setObjectName("horizontalLayou_min")
@@ -846,8 +859,11 @@ class Ui_MainWindow(object):
         self.radioTB.setText(_translate("MainWindow", "TB"))
         self.radioLT.setText(_translate("MainWindow", "LT"))
         self.pushButton_Indoor.setToolTip(_translate("MainWindow", "<html><head/><body><p>Local file (*.csv)</p></body></html>"))
-        self.pushButton_Indoor.setText(_translate("MainWindow", "Load Indoor Test(raw)"))
-        self.pushButton_overlaping.setText(_translate("MainWindow", "Overlap ISLM Boudnary"))
+        self.pushButton_Indoor.setText(_translate("MainWindow", "Indoor Test"))
+        self.pushButton_overlaping.setText(_translate("MainWindow", "Overlaping"))
+        self.label_imageScale.setText(_translate("MainWindow", "Scale"))
+        self.lineEdit_imageScale.setText(_translate("MainWindow", "1"))
+        self.pushButton_imageRotate.setText(_translate("MainWindow", "Rotate"))
         self.label_min.setText(_translate("MainWindow", "Minimum"))
         self.lineEdit_min_colorRange.setText(_translate("MainWindow", "50000"))
         self.label_max.setText(_translate("MainWindow", "Maximum"))
@@ -1019,6 +1035,8 @@ class Ui_MainWindow(object):
         self.actionWhite_Theme.triggered.connect(self.whiteTheme)
         self.actionDefault_Theme.triggered.connect(self.defaultTheme)
         self.actionTest_Footshape_Raw.triggered.connect(self.readTestResultSCV)
+
+        self.pushButton_imageRotate.clicked.connect(self.rotateImage)
 
     def setTable(self): 
         self.columns= 5
@@ -1326,7 +1344,8 @@ class Ui_MainWindow(object):
         self.theme = 'none' 
         self.testImage = False 
         self.indoor = None
-
+        self.Image = False 
+        self.img = None 
         # self.lineEdit_jobFile.setPlaceholderText("Ctrl+R : Erase all the footprints, Ctrl+Q : Exit program")
         # self.lineEdit_jobFile.setFocus()
 
@@ -1460,80 +1479,53 @@ class Ui_MainWindow(object):
 
                     current_user = self.lineEdit_hpc_ID.text().strip()
 
+                    lines=  "%15s,%5d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), current_user )
+
+
                     with open(locallog) as LF: 
-                        lines = LF.readlines()
+                        words = LF.readlines()
+                    if len(words): 
+                        if  words[0].split(",")[0].strip() == local_add: 
+                            w = words[0].split(",") 
+                            cnt = int(w[1].strip())+1
+                            words[0] = "%15s,%5d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), current_user )
+                            lines =""
+
+                        for wd in words: 
+                            lines += wd 
+
                     
-                    for i, line in enumerate(lines): 
-                        wds = line.split(",")
-                        if wds[0].strip() == local_add and wds[3].strip().upper() == current_user.upper(): 
-                            cnt = int(wds[1].strip())+1 
-                            lines[i] = "%s,%d, %s, %s\n"%(wds[0].strip(), cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
-                            break 
-                    else: 
-                        firstline= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
-                        lines[0]= firstline + lines[0] 
+                    # for i, line in enumerate(lines): 
+                    #     wds = line.split(",")
+                    #     if wds[0].strip() == local_add and wds[3].strip().upper() == current_user.upper(): 
+                    #         cnt = int(wds[1].strip())+1 
+                    #         lines[i] = "%s,%d, %s, %s\n"%(wds[0].strip(), cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
+                    #         break 
+                    # else: 
+                    #     firstline= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
+                    #     lines[0]= firstline + lines[0] 
+
+
+                    fp = open(locallog, 'w')
+                    fp.writelines(lines)
+                    fp.close()
+
+                    self.sftp.put(locallog, logfile)
+                    remove(locallog)
+
                 except Exception as EX: 
-                    # print(EX)
+                    print(EX)
                     lines= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
+                    
 
-
-                fp = open(locallog, 'w')
-                fp.writelines(lines)
-                fp.close()
-
-                self.sftp.put(locallog, logfile)
-                remove(locallog)
+               
 
                 
             except Exception as EX: 
                 print(EX, "Connection Error.") 
                 pass 
 
-    def addBoundaryOnTest(self): 
-        
-        if not isinstance(self.indoor, type(None)): 
-
-            boundaries =[]
-            grooves =[]
-            files =[]
-            items = []
-            pressures =[]
-            colors = []; marks=[]; sizes=[]
-
-            for i in range(self.fn+1): 
-                if self.chbox[i].isChecked(): 
-                    if not self.foots[i].ISLM_boundary_Init : 
-                            boundaries.append(self.foots[i].boundary)
-                    elif self.radio_ISLM_org.isChecked() and self.foots[i].ISLM_boundary_Init: 
-                        boundaries.append(self.foots[i].ISLM_boundary_Init)
-
-                    elif self.radio_ISLM_cali.isChecked() and self.foots[i].ISLM_caliboundary_Init : 
-                        boundaries.append(self.foots[i].ISLM_caliboundary_Init)
-                    elif  self.radio_ISLM_cali.isChecked() and not self.foots[i].ISLM_caliboundary_Init :
-                        boundaries.append(self.foots[i].ISLM_boundary_Init)
-                    else: 
-                        if len(self.foots[i].boundary): 
-                            boundaries.append(self.foots[i].boundary)
-                        else: 
-                            self.chbox[i].setChecked(False)
-                            continue 
-
-                    grooves.append(self.foots[i].edge_groove)
-                    name = self.foots[i].workingfile.split("/")[-1]
-                    if name[-12:] == 'postfoot.dat': name = name[:-13]
-                    files.append(name)
-                    items.append(i)
-                    colors.append(self.combo_color[i].currentText())
-                    marks.append(self.combo_mark[i].currentText())
-                    sizes.append(float(self.tableWidget.item(i, 4).text().strip()))
-
-            self.drawTestImage()
-
-            self.figure.addBoundaryOnTestFootshape(boundaries, legends=files, 
-                        items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures, 
-                        colors=colors, marks=marks, sizes=sizes)
-
-        
+    
     def addComparingBoundary_check(self):
         if self.boundaryplotting and not self.testImage: 
             boundaries =[]
@@ -2341,7 +2333,7 @@ class Ui_MainWindow(object):
         self.tableWidget.setItem(self.fn, 1, QtWidgets.QTableWidgetItem(footprintName))
         
     def addBoundary_onTestFootprint(self): 
-        if self.testImage: 
+        if not isinstance(self.indoor, type(None)) or not isinstance(self.img, type(None)):  
             self.addBoundaryOnTest()
 
     def reCalculatingFPC(self, fn=None ):
@@ -2580,8 +2572,7 @@ class Ui_MainWindow(object):
             self.vmax = float(self.lineEdit_max_colorRange.text())
             self.size = float(self.lineEdit_pointSize.text())
 
-            print (len(printsX))
-
+           
             self.figure.Plotting(printsX, printsY,\
                         printsV, vmin=self.vmin, vmax=self.vmax, size=self.size,\
                             grid=True, legends=files, filter = filter, contour=contour )
@@ -2609,25 +2600,136 @@ class Ui_MainWindow(object):
             self.changeFootprint()
         self.printFPC()
 
+
+    def addBoundaries_toCompare_Indoor(self, foots=None): 
+
+
+        boundaries =[]
+        grooves =[]
+        files =[]
+        items = []
+        pressures =[]
+        colors = []; marks=[]; sizes=[]
+
+        for i in range(self.fn+1): 
+            if self.chbox[i].isChecked(): 
+                if not foots[i].ISLM_boundary_Init : 
+                        boundaries.append(foots[i].boundary)
+                elif self.radio_ISLM_org.isChecked() and foots[i].ISLM_boundary_Init: 
+                    boundaries.append(foots[i].ISLM_boundary_Init)
+
+                elif self.radio_ISLM_cali.isChecked() and foots[i].ISLM_caliboundary_Init : 
+                    boundaries.append(foots[i].ISLM_caliboundary_Init)
+                elif  self.radio_ISLM_cali.isChecked() and not foots[i].ISLM_caliboundary_Init :
+                    boundaries.append(foots[i].ISLM_boundary_Init)
+                else: 
+                    if len(foots[i].boundary): 
+                        boundaries.append(foots[i].boundary)
+                    else: 
+                        self.chbox[i].setChecked(False)
+                        continue 
+
+                grooves.append(foots[i].edge_groove)
+                name = foots[i].workingfile.split("/")[-1]
+                if name[-12:] == 'postfoot.dat': name = name[:-13]
+                files.append(name)
+                items.append(i)
+                colors.append(self.combo_color[i].currentText())
+                marks.append(self.combo_mark[i].currentText())
+                sizes.append(float(self.tableWidget.item(i, 4).text().strip()))
+
+        return boundaries, grooves, files, items, pressures, colors, marks,  sizes 
+
+    def addBoundaryOnTest(self): 
+        
+        if not isinstance(self.indoor, type(None)) or not isinstance(self.img, type(None)): 
+
+            boundaries, grooves, files, items, pressures, colors, marks,  sizes = self.addBoundaries_toCompare_Indoor(foots=self.foots)
+            
+            if not isinstance(self.indoor, type(None)):
+            
+                self.drawTestImage()
+
+                self.figure.addBoundaryOnTestFootshape(boundaries, legends=files, 
+                            items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures, 
+                            colors=colors, marks=marks, sizes=sizes)
+            elif not isinstance(self.img, type(None)): 
+                self.figure.showImage(self.img)
+                if self.imagewt > 2200: 
+                    scale = self.imagewt  *2 * 0.8587 /  float(self.lineEdit_imageScale.text().strip())
+                else: 
+                    scale = self.imagewt  *2 /  float(self.lineEdit_imageScale.text().strip())
+                scaled =[]
+                if len(boundaries): 
+                    bndmax  = np.max(boundaries[0])
+                    if bndmax < 10.0: 
+                        for bn in boundaries: 
+                            b1 = bn[0] * scale 
+                            b2 = bn[1] * scale 
+                            b1 += self.imagewt/2 
+                            b2 += self.imageht/2 
+                            scaled.append([b1, b2])
+                    else: 
+                        scaled = boundaries
+                self.figure.addBoundaryOnTestFootshape(scaled, legends=files, 
+                            items=items, size=float(self.lineEdit_pointSize.text()), grv=grooves, pressure=pressures, 
+                            colors=colors, marks=marks, sizes=sizes, imageScale=scale, imageName=self.ImageName)
+            
+
     def readTestResultSCV(self): 
-        jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.csv)")
+        jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.csv *.png *.jpg)")
         if jobFile: 
             self.cwd = getCWD(jobFile)
             self.writeSetting()
+            if '.csv' in jobFile: 
+                self.testImage = True
+                self.Image = False 
+                self.img = None 
+                self.indoor = inDoorFootprint(jobFile)
+                self.indoor.positioning(value=40, add=15.0E-3)
+                # self.indoor.imageBoundary()
 
-            self.indoor = inDoorFootprint(jobFile)
-            self.indoor.positioning(value=40, add=15.0E-3)
-            # self.indoor.imageBoundary()
+                self.lineEdit_min_colorRange.setText("20")
+                self.lineEdit_max_colorRange.setText("80")
+                self.lineEdit_PointsDensity.setEnabled(True)
+                
+                self.drawTestImage()
+                self.indoorMin = self.lineEdit_min_colorRange.text()
+                self.indoorMax = self.lineEdit_max_colorRange.text()
+            else: 
+                import matplotlib.image as mpimg
+                self.img = mpimg.imread(jobFile)
+                if len(self.img)  > 2200: 
+                    scale = len(self.img)   *2 * 0.8587 /  float(self.lineEdit_imageScale.text().strip())
+                else: 
+                    scale = len(self.img)   *2  /  float(self.lineEdit_imageScale.text().strip())
 
-            self.lineEdit_min_colorRange.setText("20")
-            self.lineEdit_max_colorRange.setText("80")
-            self.lineEdit_PointsDensity.setEnabled(True)
-            
-            self.drawTestImage()
-            self.indoorMin = self.lineEdit_min_colorRange.text()
-            self.indoorMax = self.lineEdit_max_colorRange.text()
-            
-            
+                self.imageScale = scale 
+                self.ImageName = jobFile.split("/")[-1]
+                self.figure.showImage(self.img, imageScale=scale, imageName = self.ImageName)
+
+                self.Image = True 
+                self.testImage = False 
+                self.indoor = None 
+                self.imageht = len(self.img) 
+                self.imagewt = len(self.img[0])
+                print ("\n Image Size height=%d, width=%d"%(self.imageht, self.imagewt))
+
+    def rotateImage(self): 
+
+        if not isinstance(self.img, type(None)): 
+            img = []
+            for i in range(self.imagewt): 
+                tmp =[]
+                for j in range(self.imageht): 
+                    tmp.append(self.img[j][i])
+                img.append(tmp)
+
+            self.img = np.array(img)
+
+            self.figure.showImage(self.img, imageScale=self.imageScale, imageName = self.ImageName)
+            self.imageht = len(self.img) 
+            self.imagewt = len(self.img[0])
 
     def drawTestImage(self): 
         size = float(self.lineEdit_pointSize.text().strip())

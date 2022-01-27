@@ -215,6 +215,7 @@ class myCanvas(FigureCanvas):
 
         self.shift = 0 
         self.scale = 1.0 
+        self.footImageScale = 1.0 
 
         self.valuepointx=None
         self.valuepointy=None
@@ -298,8 +299,10 @@ class myCanvas(FigureCanvas):
                 self.circle=[]
             
             elif self.mclick ==3:
-                self.xs.append(event.xdata)
-                self.ys.append(event.ydata)
+                pointX = event.xdata / self.footImageScale
+                pointy = event.ydata / self.footImageScale
+                self.xs.append(pointX)
+                self.ys.append(pointy)
                 d, = plt.plot(event.xdata, event.ydata, 'o', color='gray')
                 self.dots.append(d)
                 
@@ -315,12 +318,12 @@ class myCanvas(FigureCanvas):
                 cy = -C/A/2.0
                 R = math.sqrt(B*B + C*C - 4*A*D) / 2/abs(A)
 
-                self.xs.append(event.xdata)
-                self.ys.append(event.ydata)
-                d, = plt.plot(cx, cy, 'o', color='red')
+                self.xs.append(pointX)
+                self.ys.append(pointy)
+                d, = plt.plot(cx*self.footImageScale, cy*self.footImageScale, 'o', color='red')
                 self.dots.append(d)
 
-                ch = plt.text((self.xs[0]+self.xs[1])/2.0, (self.ys[0]+self.ys[1])/2.0, "R="+str(round(R*1000, 2)), size=self.fontsize, color='black')
+                ch = plt.text((self.xs[0]+self.xs[1])/2.0*self.footImageScale, (self.ys[0]+self.ys[1])/2.0*self.footImageScale, "R="+str(round(R*1000, 2)), size=self.fontsize, color='black')
                 self.chars.append(ch)
 
                 crcl = plt.Circle((cx, cy), R, color='gray', fill=False)
@@ -328,9 +331,11 @@ class myCanvas(FigureCanvas):
                 self.circle.append(crcl)
 
             else:
-                self.xs.append(event.xdata)
-                self.ys.append(event.ydata)
-                d, = plt.plot(event.xdata, event.ydata, 'o', color='gray')
+                pointX = event.xdata / self.footImageScale
+                pointy = event.ydata / self.footImageScale
+                self.xs.append(pointX)
+                self.ys.append(pointy)
+                d, = plt.plot(event.xdata,event.ydata, 'o', color='gray')
                 self.dots.append(d)
 
             current_xlim=self.ax.get_xlim()
@@ -370,17 +375,19 @@ class myCanvas(FigureCanvas):
             self.figure.canvas.draw_idle()
         elif event.button ==3:
             self.clicked += 1
-            self.xs.append(event.xdata)
-            self.ys.append(event.ydata)
-            d, = plt.plot(event.xdata, event.ydata, 'o', color='red')
+            pointX = event.xdata / self.footImageScale
+            pointy = event.ydata / self.footImageScale
+            self.xs.append(pointX)
+            self.ys.append(pointy)
+            d, = plt.plot(event.xdata,event.ydata, 'o', color='red')
             self.dots.append(d)
             N = len(self.xs)-1
             if N> 0: 
                 self.distance = round( math.sqrt((self.xs[N]-self.xs[N-1])**2 + (self.ys[N]-self.ys[N-1])**2 ) *1000, 2)
-                ch = plt.text((self.xs[N]+self.xs[N-1])/2.0, (self.ys[N]+self.ys[N-1])/2.0, str(self.distance), size=self.fontsize)
+                ch = plt.text((self.xs[N]+self.xs[N-1])/2.0*self.footImageScale, (self.ys[N]+self.ys[N-1])/2.0*self.footImageScale, str(self.distance), size=self.fontsize)
                 self.chars.append(ch)
 
-                ln, = plt.plot([self.xs[N-1], self.xs[N]],[self.ys[N-1], self.ys[N]], color='orange')
+                ln, = plt.plot([self.xs[N-1]*self.footImageScale, self.xs[N]*self.footImageScale],[self.ys[N-1]*self.footImageScale, self.ys[N]*self.footImageScale], color='orange')
                 self.lines.append(ln)
 
                 if self.clicked > 2: 
@@ -396,7 +403,7 @@ class myCanvas(FigureCanvas):
                     for achar in self.achars: 
                         achar.set_visible(False)
                     self.figure.canvas.draw_idle()
-                    ach= plt.text(cx, cy, "Area="+ str(round(area*1_000_0, 2)), color='gray', size=self.fontsize)
+                    ach= plt.text(cx*self.footImageScale, cy*self.footImageScale, "Area="+ str(round(area*1_000_0, 2)), color='gray', size=self.fontsize)
                     self.achars.append(ach)
 
                     for char in self.llen:
@@ -407,10 +414,10 @@ class myCanvas(FigureCanvas):
                     self.cline=[]
                     
                     self.distance = round( math.sqrt((self.xs[N]-self.xs[0])**2 + (self.ys[N]-self.ys[0])**2 ) *1000, 2)
-                    ch = plt.text((self.xs[N]+self.xs[0])/2.0, (self.ys[N]+self.ys[0])/2.0, str(self.distance), color='gray', size=self.fontsize)
+                    ch = plt.text((self.xs[N]+self.xs[0])/2.0*self.footImageScale, (self.ys[N]+self.ys[0])/2.0*self.footImageScale, str(self.distance), color='gray', size=self.fontsize)
                     self.llen.append(ch)
 
-                    ln, = plt.plot([self.xs[0], self.xs[N]],[self.ys[0], self.ys[N]], color='gray', linestyle="--" )
+                    ln, = plt.plot([self.xs[0]*self.footImageScale, self.xs[N]*self.footImageScale],[self.ys[0]*self.footImageScale, self.ys[N]*self.footImageScale], color='gray', linestyle="--" )
                     self.cline.append(ln)
             current_xlim=self.ax.get_xlim()
             current_ylim=self.ax.get_ylim()
@@ -418,7 +425,9 @@ class myCanvas(FigureCanvas):
             plt.ylim(current_ylim[0], current_ylim[1])
             self.figure.canvas.draw_idle()
 
-    def addBoundaryOnTestFootshape(self, pts, legends=None, items=None, size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None): 
+    def addBoundaryOnTestFootshape(self, pts, legends=None, items=None,\
+         size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None, 
+         imageScale=1.0, imageName=""): 
         cnt = 0 
         size *= 5
         yrange = 0.001
@@ -445,15 +454,19 @@ class myCanvas(FigureCanvas):
                     vsx.append(vx); vsy.append(vy); vsv.append(vv)
 
             cnt += 1 
-
+        self.footImageScale = imageScale
+        if imageScale != 1.0: 
+            self.ax.text(5, 5, "The size of the image may differ from the actual size", size=self.fontsize, color='lightgray')
+            self.ax.text(5, 80, "%s"%(imageName), size=self.fontsize, color='lightgray')
         self.figure.canvas.draw()
+
         
     def plotComparing(self, pts, legends=None, items=None, size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None): 
         self.figure.clear()
         self.ax = self.figure.add_subplot(111)
         self.ax.axis('equal')
         size *= 5
-
+        self.footImageScale = 1.0 
         if pressure: 
             distance = 0.1
             tpress=[]
@@ -535,6 +548,7 @@ class myCanvas(FigureCanvas):
 
 
     def add_pressure(self, pressure, yrange=0.001, distance=0.02, below=True, position=0, size=1, color='black', scale=1, mark='*', EA=1): 
+        self.footImageScale = 1.0 
         xs = pressure[0]; ys=pressure[1]; pv = pressure[2] 
 
         yrange = 0.001 
@@ -632,6 +646,7 @@ class myCanvas(FigureCanvas):
 
     
     def testFootImage(self,  xs=None, ys=None, pv=None, **args) :
+        self.footImageScale = 1.0 
         vmin = 50000; vmax = 500000
         size = 0.3 ; cmap = 'rainbow'
         adding = None 
@@ -686,6 +701,7 @@ class myCanvas(FigureCanvas):
 
     def Plotting(self, xs=None, ys=None, pv=None, **args) :
         ## points = plt.scatter(px, py, c=pv, s=size, cmap=cmap, vmin=vmin, vmax=vmin*10, edgecolors=None, linewidths=0.0 )
+        self.footImageScale = 1.0 
         vmin = 50000; vmax = 500000
         size = 0.3 ; cmap = 'rainbow'
         adding = None 
@@ -918,7 +934,8 @@ class myCanvas(FigureCanvas):
             self.removePoints(action=False)
         except: 
             pass 
-
+        
+        self.footImageScale = 1.0 
         xs = points[0]
         ys = points[1]
 
@@ -941,6 +958,7 @@ class myCanvas(FigureCanvas):
         self.figure.canvas.draw_idle()
 
     def removePoints(self, action=True): 
+        self.footImageScale = 1.0 
         self.fpcArea.remove()
         for ln in self.fpcLine: 
             try: 
@@ -967,4 +985,14 @@ class myCanvas(FigureCanvas):
         self.figure.tight_layout()
         self.figure.canvas.draw()
 
+        self.footImageScale = 1.0 
 
+
+    def showImage(self, img, imageScale=1.0, imageName=""): 
+        self.clearWindow() 
+        self.ax.imshow(img)
+        self.ax.text(5, 5, "The size of the image may differ from the actual size", size=self.fontsize, color='lightgray')
+        self.ax.text(5, 80, "%s"%(imageName), size=self.fontsize, color='lightgray')
+        self.footImageScale = imageScale
+        self.figure.canvas.draw()
+        self.footImage = True 
