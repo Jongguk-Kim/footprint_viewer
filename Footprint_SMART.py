@@ -1491,7 +1491,8 @@ class Ui_MainWindow(object):
                             words[0] = "%15s,%5d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), current_user )
                             lines =""
 
-                        for wd in words: 
+                        for i, wd in enumerate(words): 
+                            if i > 5000: break 
                             lines += wd 
 
                     
@@ -1637,8 +1638,6 @@ class Ui_MainWindow(object):
         if isfile(self.localODB_dat): remove(self.localODB_dat)
         if isfile(self.localAbaqusInp): remove(self.localAbaqusInp)
         if isfile('abaqus.rpy'): remove('abaqus.rpy')
-
-        
 
         # if isfile():  remove()
 
