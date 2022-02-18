@@ -277,12 +277,37 @@ class myCanvas(FigureCanvas):
 
         return A[0]
 
+    def clearClicking(self): 
+        self.clicked =0  
+        self.mclick = 0
+        self.xs=[];           self.ys=[]
+
+        for dot in self.dots: 
+            dot.remove()
+        for line in self.lines: 
+            line.remove()
+        for char in self.chars: 
+            char.set_visible(False)
+        for char in self.achars: 
+            char.set_visible(False)
+        for cl in self.cline: 
+            cl.remove()
+        for ch in self.llen:
+            ch.set_visible(False)
+        for cl in self.circle:
+            cl.remove()
+
+        self.circle=[]
+        self.dots=[];      self.lines=[];        self.chars=[];        self.achars=[]
+        self.cline=[];     self.llen=[]
+
     def onReleased(self, event): 
 
         if event.button == 2: 
             self.mclick += 1
 
             if self.mclick == 4: 
+                
                 self.xs=[]
                 self.ys=[]
                 self.mclick=0
@@ -345,28 +370,7 @@ class myCanvas(FigureCanvas):
             self.figure.canvas.draw_idle()
 
         elif event.button == 1: 
-            self.clicked =0  
-            self.mclick = 0
-            self.xs=[];           self.ys=[]
-
-            for dot in self.dots: 
-                dot.remove()
-            for line in self.lines: 
-                line.remove()
-            for char in self.chars: 
-                char.set_visible(False)
-            for char in self.achars: 
-                char.set_visible(False)
-            for cl in self.cline: 
-                cl.remove()
-            for ch in self.llen:
-                ch.set_visible(False)
-            for cl in self.circle:
-                cl.remove()
-
-            self.circle=[]
-            self.dots=[];      self.lines=[];        self.chars=[];        self.achars=[]
-            self.cline=[];     self.llen=[]
+            self.clearClicking()
 
             current_xlim=self.ax.get_xlim()
             current_ylim=self.ax.get_ylim()
@@ -428,6 +432,9 @@ class myCanvas(FigureCanvas):
     def addBoundaryOnTestFootshape(self, pts, legends=None, items=None,\
          size=1, grv=None, pressure=None, colors=None, marks=None, sizes=None, 
          imageScale=1.0, imageName=""): 
+
+        self.clearClicking()
+
         cnt = 0 
         size *= 5
         yrange = 0.001
@@ -467,6 +474,7 @@ class myCanvas(FigureCanvas):
         self.ax.axis('equal')
         size *= 5
         self.footImageScale = 1.0 
+        self.clearClicking()
         if pressure: 
             distance = 0.1
             tpress=[]
@@ -548,6 +556,9 @@ class myCanvas(FigureCanvas):
 
 
     def add_pressure(self, pressure, yrange=0.001, distance=0.02, below=True, position=0, size=1, color='black', scale=1, mark='*', EA=1): 
+
+        self.clearClicking()
+
         self.footImageScale = 1.0 
         xs = pressure[0]; ys=pressure[1]; pv = pressure[2] 
 
@@ -672,10 +683,8 @@ class myCanvas(FigureCanvas):
         
         self.figure.clear()
         plt.clf()
+        self.clearClicking()
         self.ax = self.figure.add_subplot(111)
-
-        
-
          
         ix = np.where(pv>vmin)[0]
         px = xs[ix] 
@@ -726,6 +735,7 @@ class myCanvas(FigureCanvas):
 
         self.figure.clear()
         plt.clf()
+        self.clearClicking()
         if not grid: 
             self.ax = self.figure.add_subplot(111)
             plt.axis('equal')   
@@ -958,6 +968,7 @@ class myCanvas(FigureCanvas):
         self.figure.canvas.draw_idle()
 
     def removePoints(self, action=True): 
+        self.clearClicking()
         self.footImageScale = 1.0 
         self.fpcArea.remove()
         for ln in self.fpcLine: 
@@ -986,10 +997,12 @@ class myCanvas(FigureCanvas):
         self.figure.canvas.draw()
 
         self.footImageScale = 1.0 
+        self.clearClicking()
 
 
     def showImage(self, img, imageScale=1.0, imageName=""): 
-        self.clearWindow() 
+        self.clearWindow()
+        self.clearClicking() 
         self.ax.imshow(img)
         self.ax.text(5, 5, "The size of the image may differ from the actual size", size=self.fontsize, color='lightgray')
         self.ax.text(5, 80, "%s"%(imageName), size=self.fontsize, color='lightgray')
