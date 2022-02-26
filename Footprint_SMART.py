@@ -324,8 +324,8 @@ class Ui_MainWindow(object):
         self.groupBox_5.setTitle("")
         self.groupBox_5.setObjectName("groupBox_5")
         self.lineEdit_patternMesh = QtWidgets.QLineEdit(self.groupBox_5)
-        self.lineEdit_patternMesh.setGeometry(QtCore.QRect(0, 2, 250, 20))
-        self.lineEdit_patternMesh.setMinimumSize(QtCore.QSize(250, 20))
+        self.lineEdit_patternMesh.setGeometry(QtCore.QRect(0, 2, 241, 20))
+        self.lineEdit_patternMesh.setMinimumSize(QtCore.QSize(10, 20))
         self.lineEdit_patternMesh.setMaximumSize(QtCore.QSize(250, 20))
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -334,9 +334,14 @@ class Ui_MainWindow(object):
         self.lineEdit_patternMesh.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lineEdit_patternMesh.setObjectName("lineEdit_patternMesh")
         self.push_searchMesh = QtWidgets.QPushButton(self.groupBox_5)
-        self.push_searchMesh.setGeometry(QtCore.QRect(254, 2, 75, 20))
-        self.push_searchMesh.setMaximumSize(QtCore.QSize(16777215, 20))
+        self.push_searchMesh.setGeometry(QtCore.QRect(240, 2, 50, 20))
+        self.push_searchMesh.setMaximumSize(QtCore.QSize(50, 20))
         self.push_searchMesh.setObjectName("push_searchMesh")
+        self.checkBox_searching_previousDirectory = QtWidgets.QCheckBox(self.groupBox_5)
+        self.checkBox_searching_previousDirectory.setGeometry(QtCore.QRect(290, 4, 40, 16))
+        self.checkBox_searching_previousDirectory.setMaximumSize(QtCore.QSize(40, 16777215))
+        self.checkBox_searching_previousDirectory.setChecked(True)
+        self.checkBox_searching_previousDirectory.setObjectName("checkBox_searching_previousDirectory")
         self.verticalLayout_menu.addWidget(self.groupBox_5)
         self.horizontalLayout_boundarybox_loading = QtWidgets.QHBoxLayout()
         self.horizontalLayout_boundarybox_loading.setObjectName("horizontalLayout_boundarybox_loading")
@@ -825,6 +830,7 @@ class Ui_MainWindow(object):
         self.lineEdit_patternMesh.setToolTip(_translate("MainWindow", "<html><head/><body><p>CUTE 2D mesh or Pattern Mesh (ptn)</p></body></html>"))
         self.lineEdit_patternMesh.setText(_translate("MainWindow", "Mesh 2D or Pattern"))
         self.push_searchMesh.setText(_translate("MainWindow", "Search"))
+        self.checkBox_searching_previousDirectory.setText(_translate("MainWindow", "Pre"))
         self.pushButton_QuickLoad.setText(_translate("MainWindow", "Quick Load (Not Calibrated)"))
         self.pushButton_GeneratngFoot.setText(_translate("MainWindow", "Load (Not Calibrated)"))
         self.filename.setText(_translate("MainWindow", "Connect FTP or Open a file"))
@@ -943,6 +949,8 @@ class Ui_MainWindow(object):
         self.actionDefault_Theme.setShortcut(_translate("MainWindow", "Ctrl+Shift+G"))
         self.actionTest_Footshape_Raw.setText(_translate("MainWindow", "Test_Footshape_Raw"))
         self.actionTest_Footshape_Raw.setShortcut(_translate("MainWindow", "Ctrl+Shift+T"))
+
+
 
     def checkTheme(self): 
         if self.theme == 'dark': 
@@ -1090,6 +1098,8 @@ class Ui_MainWindow(object):
         self.lineEdit_image_LateralShift.returnPressed.connect(self.addBoundaryOnTest)
         self.lineEdit_image_verticalShift.returnPressed.connect(self.addBoundaryOnTest)
 
+        self.checkBox_searching_previousDirectory.clicked.connect(self.previous_path_file)
+
     def setTable(self): 
         self.columns= 5
         self.rows = 18
@@ -1128,6 +1138,20 @@ class Ui_MainWindow(object):
 
             self.chbox[i].stateChanged.connect(self.addComparingBoundary_check)
 
+    def previous_path_file(self): 
+        if isfile('filename_path'): 
+            if self.checkBox_searching_previousDirectory.isChecked(): 
+                with open('filename_path') as F: 
+                    line = F.readline()
+                fp = open(self.previous_path, 'w')
+                fp.write(line)
+                fp.close()
+            else: 
+                if isfile(self.previous_path) : 
+                    remove(self.previous_path)
+
+        else: 
+            self.checkBox_searching_previousDirectory.setChecked(False)
 
     def start_log(self): 
         self.log='footprint.log'
@@ -1215,6 +1239,10 @@ class Ui_MainWindow(object):
             Dialog = QtWidgets.QDialog()
             dlg = tree_widget.Ui_Dialog()
             extens=['.inp', '.odb']
+
+            if isfile(self.previous_path) : 
+                remove(self.previous_path)
+
             dlg.setupUi(Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
             Dialog.exec_()
             try: 
@@ -1225,6 +1253,11 @@ class Ui_MainWindow(object):
             except: 
                 self.lineEdit_jobDir.setText("")
                 self.lineEdit_smartFile.setText("")
+
+            if isfile(self.previous_path) : 
+                self.checkBox_searching_previousDirectory.setChecked(True)
+            else: 
+                self.checkBox_searching_previousDirectory.setChecked(False)
             
             # fp = open('filename_path', 'w')
             # fp.close()
@@ -1235,18 +1268,25 @@ class Ui_MainWindow(object):
             Dialog = QtWidgets.QDialog()
             dlg = tree_widget.Ui_Dialog()
             extens=['.inp', '.ptn']
-            dlg.setupUi(Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
-            Dialog.exec_()
+
+            
             try: 
                 with open('filename_path') as F: 
                     path = F.readlines()
+
+                if isfile(self.previous_path): 
+                    self.checkBox_searching_previousDirectory.setChecked(True)
+                else: 
+                    self.checkBox_searching_previousDirectory.setChecked(False)
+                
+                dlg.setupUi(Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
+                Dialog.exec_()
                 
                 self.lineEdit_patternMesh.setText(path[0].strip()+"/"+path[1].strip()+", surf=CONT, step=3, direction=x+")
             except: 
                 self.lineEdit_patternMesh.setText(", surf=CONT, step=3, direction=x+")
-            # fp = open('filename_path', 'w')
-            # fp.close()
 
+            
 
     def rangeFootprints(self): 
         if self.fn: 
@@ -1319,6 +1359,7 @@ class Ui_MainWindow(object):
         print ("## Initialized #############################")
 
         self.lineEdit_jobFile.setText("")
+        
         
     def initial_variables(self):
          
@@ -1398,11 +1439,17 @@ class Ui_MainWindow(object):
         self.indoor = None
         self.Image = False 
         self.img = None 
+
         # self.lineEdit_jobFile.setPlaceholderText("Ctrl+R : Erase all the footprints, Ctrl+Q : Exit program")
         # self.lineEdit_jobFile.setFocus()
 
         self.boundary_lateralShift = 0.0
         self.boundary_verticalShift = 0.0 
+
+        self.checkBox_searching_previousDirectory.setDisabled(True)
+        self.previous_path = "previous_path"
+        if isfile(self.previous_path): 
+            remove(self.previous_path)
 
 
     def currentFootprintNumber(self): 
@@ -1693,6 +1740,7 @@ class Ui_MainWindow(object):
         if isfile(self.localODB_dat): remove(self.localODB_dat)
         if isfile(self.localAbaqusInp): remove(self.localAbaqusInp)
         if isfile('abaqus.rpy'): remove('abaqus.rpy')
+        if isfile(self.previous_path): remove(self.previous_path)
 
         # if isfile():  remove()
 
@@ -1965,7 +2013,9 @@ class Ui_MainWindow(object):
         self.foots[self.fn].ISLM_FPC  =None
 
         if self.connectionStatus: 
-            if self.radio_Manual.isChecked(): self.radio_calculation.setChecked(True)
+            if self.radio_Manual.isChecked(): 
+                self.radio_calculation.setChecked(True)
+                
 
             if ".odb" in self.lineEdit_smartFile.text() and self.radio_Manual.isChecked():
                 
@@ -2166,7 +2216,11 @@ class Ui_MainWindow(object):
                     ptnmesh = self.localPtn
                     smart = self.localSMART
                     if isfile(mesh2d): 
-                        outer, belt, bead, carcass = readBodyLayout(meshfile=mesh2d)
+                        try: 
+                            outer, belt, bead, carcass = readBodyLayout(meshfile=mesh2d)
+                        except: 
+                            print (" Wrong LAYOUT MESH FILE")
+                            return 
 
                 else: 
                     sfricResult = jobFile
@@ -3477,6 +3531,7 @@ class Ui_MainWindow(object):
                 self.lineEdit_4_Sim_Type.setEnabled(True)
                 self.lineEdit_5_Sim_Num.setEnabled(True)
                 self.pushButton_QuickLoad.setEnabled(True)
+                self.checkBox_searching_previousDirectory.setEnabled(False)
             elif self.radio_Manual.isChecked(): 
                 self.lineEdit_jobDir.setDisabled(False)
                 # self.lineEdit_jobFile.setDisabled(False)
@@ -3490,6 +3545,7 @@ class Ui_MainWindow(object):
                 self.lineEdit_4_Sim_Type.setEnabled(False)
                 self.lineEdit_5_Sim_Num.setEnabled(False)
                 self.pushButton_QuickLoad.setEnabled(False)
+                self.checkBox_searching_previousDirectory.setEnabled(True)
             else: 
                 self.lineEdit_jobDir.setDisabled(True)
                 self.lineEdit_jobFile.setDisabled(True)
@@ -3503,11 +3559,13 @@ class Ui_MainWindow(object):
                 self.lineEdit_4_Sim_Type.setEnabled(True)
                 self.lineEdit_5_Sim_Num.setEnabled(True)
                 self.pushButton_QuickLoad.setEnabled(True)
+                self.checkBox_searching_previousDirectory.setEnabled(False)
 
             if  "ISLM_USER" in self.lineEdit_hpc_ID.text() : 
                 self.radio_Manual.setDisabled(True)
                 self.lineEdit_jobDir.setText("Ctrl+R : Delete all footprints")
                 self.lineEdit_smartFile.setText("Ctrl+Q : Exit Program")
+                self.checkBox_searching_previousDirectory.setEnabled(False)
 
         else: 
             self.lineEdit_jobDir.setDisabled(True)

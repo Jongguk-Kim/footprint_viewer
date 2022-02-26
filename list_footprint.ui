@@ -525,13 +525,13 @@
             <rect>
              <x>0</x>
              <y>2</y>
-             <width>250</width>
+             <width>241</width>
              <height>20</height>
             </rect>
            </property>
            <property name="minimumSize">
             <size>
-             <width>250</width>
+             <width>10</width>
              <height>20</height>
             </size>
            </property>
@@ -560,20 +560,42 @@
           <widget class="QPushButton" name="push_searchMesh">
            <property name="geometry">
             <rect>
-             <x>254</x>
+             <x>240</x>
              <y>2</y>
-             <width>75</width>
+             <width>50</width>
              <height>20</height>
             </rect>
            </property>
            <property name="maximumSize">
             <size>
-             <width>16777215</width>
+             <width>50</width>
              <height>20</height>
             </size>
            </property>
            <property name="text">
             <string>Search</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="checkBox_searching_previousDirectory">
+           <property name="geometry">
+            <rect>
+             <x>290</x>
+             <y>4</y>
+             <width>40</width>
+             <height>16</height>
+            </rect>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>40</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Pre</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
            </property>
           </widget>
          </widget>

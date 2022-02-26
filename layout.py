@@ -23,7 +23,11 @@ class LAYOUT:
         self.GD=0.0
         self.UTG=0.0
         self.edge_outer=[]
-        self.Mesh2DInformation(meshfile)
+        try: 
+            self.Mesh2DInformation(meshfile)
+        except: 
+            print (" NOT MESH FILE!!")
+            
 
     def Mesh2DInformation(self, InpFileName):
         with open(InpFileName) as INP:
@@ -65,6 +69,7 @@ class LAYOUT:
                 elif 'SURFACE' in word[0].upper(): 
                     spt = 'SF'
                     name = word[2].split('=')[1].strip()
+
                     self.Surface.AddName(name)
                 #                    print ('Name=', name, 'was stored', Surface.Surface)
                 elif 'TIE' in word[0].upper(): 

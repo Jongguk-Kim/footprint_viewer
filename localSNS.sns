@@ -1,0 +1,213 @@
+{
+	"VirtualTireParameters": {
+		"BT2Width": "101",
+		"ShoulderDrop": "7.47",
+		"MainGrooveDepth": "14",
+		"MoldKFactor": "56.999",
+		"BeadringType": "Tubeless",
+		"UnderTreadGauge": "5",
+		"InnerPeriphery": "667.61 (99% Length)",
+		"CarcassPeriphery": "697.68",
+		"OverType": "Tread Over Side",
+		"OverallDiameter": "1046",
+		"JLCType": "",
+		"TR1": "750",
+		"RimDiameter": "569.2",
+		"TR3": "",
+		"BT4Width": "38.5",
+		"TR2": "10000",
+		"BT1Width": "91.5",
+		"TR4": "",
+		"BeadSetDistance": "674",
+		"BeltLiftRatio": "1.03",
+		"BT3Width": "92.5",
+		"TreadDesignWidth": "236"
+	},
+	"VirtualTireBasicInfo": {
+		"Pattern": "AL26",
+		"Plant": "DP",
+		"VirtualTireID": "3003474VT00057",
+		"ProductCode": "3003474",
+		"VirtualTireDBLocation": "RND",
+		"CreatorID": "20200155",
+		"TireSize": "295/80R22.5",
+		"LayoutType": "In-mold",
+		"HiddenRevision": 0,
+		"LayoutVersion": "1",
+		"ProductLine": "TBR"
+	},
+	"AnalysisInformation": {
+		"SimulationCode": "RND-3003474VT00057-0-D101-0002",
+		"SolverVer": "1",
+		"SimulationGroupName": "SMART_Footshape",
+		"PatternMeshInfo": {
+			"GrooveNum": "4",
+			"FilePath": "/AL26/295_80R22_5/AL26_295_80R22_5_SP_001.ptn",
+			"PitchNum": "P0",
+			"TDW": "",
+			"TireSize": "295/80R22.5",
+			"PitchLengh": "",
+			"PatternName": "AL26",
+			"ShoulderType": "SQUARE",
+			"PatternReverse": "0",
+			"GrooveDepth": "",
+			"PatternMeshID": 19
+		},
+		"AnalysisCondition": [
+			{
+				"Load": "3550.0",
+				"PCIType": "NO",
+				"PCIPressure": "0.0",
+				"PCIRimWidth": "246.0",
+				"CamberAngle": "0",
+				"RimWidth": "9.0",
+				"Velocity": "0",
+				"Pressure": "9.1"
+			}
+		],
+		"SolverInfo": "SMART",
+		"PatternMeshUse": "NO"
+	},
+	"ElsetMaterialInfo": {
+		"Mixing": [
+			{
+				"Elset": "BSW",
+				"Compound": "S08"
+			},
+			{
+				"Elset": "RIC",
+				"Compound": "B74"
+			},
+			{
+				"Elset": "HUS",
+				"Compound": "B84"
+			},
+			{
+				"Elset": "SHW",
+				"Compound": "S47"
+			},
+			{
+				"Elset": "L11",
+				"Compound": "H69"
+			},
+			{
+				"Elset": "CHS",
+				"Compound": "C64"
+			},
+			{
+				"Elset": "UBF",
+				"Compound": "B74"
+			},
+			{
+				"Elset": "LBF",
+				"Compound": "B87"
+			},
+			{
+				"Elset": "ES2",
+				"Compound": "C83"
+			},
+			{
+				"Elset": "CTB",
+				"Compound": "T39"
+			},
+			{
+				"Elset": "SUT",
+				"Compound": "U73"
+			},
+			{
+				"Elset": "TRW",
+				"Compound": "S60"
+			}
+		],
+		"Calendered": [
+			{
+				"Elset": "BDC",
+				"Angle": "45",
+				"MatCode": "ABN343A",
+				"RawCode": "N66 1260D/2 20EPI",
+				"Compound": "C51",
+				"Width": "",
+				"Direction": "",
+				"EPI": "20",
+				"Gauge": "1.2"
+			},
+			{
+				"Elset": "BT1",
+				"Angle": "60",
+				"MatCode": "ABS351A",
+				"RawCode": "2(0.25)/5(0.35)SHT",
+				"Compound": "C81",
+				"Width": "91.5",
+				"Direction": "R",
+				"EPI": "10",
+				"Gauge": "1.9"
+			},
+			{
+				"Elset": "BT2",
+				"Angle": "20",
+				"MatCode": "ABS421A",
+				"RawCode": "3/8+13(0.22)+wHT",
+				"Compound": "C81",
+				"Width": "101",
+				"Direction": "R",
+				"EPI": "10.75",
+				"Gauge": "2.5"
+			},
+			{
+				"Elset": "BT3",
+				"Angle": "20",
+				"MatCode": "ABS421A",
+				"RawCode": "3/8+13(0.22)+wHT",
+				"Compound": "C81",
+				"Width": "92.5",
+				"Direction": "L",
+				"EPI": "10.75",
+				"Gauge": "2.5"
+			},
+			{
+				"Elset": "BT4",
+				"Angle": "20",
+				"MatCode": "ABS351A",
+				"RawCode": "2(0.25)/5(0.35)SHT",
+				"Compound": "C81",
+				"Width": "38.5",
+				"Direction": "L",
+				"EPI": "10",
+				"Gauge": "1.9"
+			},
+			{
+				"Elset": "C01",
+				"Angle": "90",
+				"MatCode": "ABS422A",
+				"RawCode": "3/8+13(0.18)+wHT",
+				"Compound": "C53",
+				"Width": "775",
+				"Direction": "",
+				"EPI": "12.2",
+				"Gauge": "1.56"
+			},
+			{
+				"Elset": "CH1",
+				"Angle": "30",
+				"MatCode": "ABS401A",
+				"RawCode": "3+9(0.22)+wNT",
+				"Compound": "C53",
+				"Width": "100",
+				"Direction": "",
+				"EPI": "13",
+				"Gauge": "1.6"
+			},
+			{
+				"Elset": "CH2",
+				"Angle": "30",
+				"MatCode": "ABN343A",
+				"RawCode": "N66 1260D/2 20EPI",
+				"Compound": "C56",
+				"Width": "90",
+				"Direction": "",
+				"EPI": "20",
+				"Gauge": "1.2"
+			}
+		]
+	}
+}

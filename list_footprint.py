@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'list_footprint.ui'
+# Form implementation generated from reading ui file '.\list_footprint.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.1
 #
@@ -152,8 +152,8 @@ class Ui_MainWindow(object):
         self.groupBox_5.setTitle("")
         self.groupBox_5.setObjectName("groupBox_5")
         self.lineEdit_patternMesh = QtWidgets.QLineEdit(self.groupBox_5)
-        self.lineEdit_patternMesh.setGeometry(QtCore.QRect(0, 2, 250, 20))
-        self.lineEdit_patternMesh.setMinimumSize(QtCore.QSize(250, 20))
+        self.lineEdit_patternMesh.setGeometry(QtCore.QRect(0, 2, 241, 20))
+        self.lineEdit_patternMesh.setMinimumSize(QtCore.QSize(10, 20))
         self.lineEdit_patternMesh.setMaximumSize(QtCore.QSize(250, 20))
         font = QtGui.QFont()
         font.setFamily("Arial")
@@ -162,9 +162,14 @@ class Ui_MainWindow(object):
         self.lineEdit_patternMesh.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.lineEdit_patternMesh.setObjectName("lineEdit_patternMesh")
         self.push_searchMesh = QtWidgets.QPushButton(self.groupBox_5)
-        self.push_searchMesh.setGeometry(QtCore.QRect(254, 2, 75, 20))
-        self.push_searchMesh.setMaximumSize(QtCore.QSize(16777215, 20))
+        self.push_searchMesh.setGeometry(QtCore.QRect(240, 2, 50, 20))
+        self.push_searchMesh.setMaximumSize(QtCore.QSize(50, 20))
         self.push_searchMesh.setObjectName("push_searchMesh")
+        self.checkBox_searching_previousDirectory = QtWidgets.QCheckBox(self.groupBox_5)
+        self.checkBox_searching_previousDirectory.setGeometry(QtCore.QRect(290, 4, 40, 16))
+        self.checkBox_searching_previousDirectory.setMaximumSize(QtCore.QSize(40, 16777215))
+        self.checkBox_searching_previousDirectory.setChecked(True)
+        self.checkBox_searching_previousDirectory.setObjectName("checkBox_searching_previousDirectory")
         self.verticalLayout_menu.addWidget(self.groupBox_5)
         self.horizontalLayout_boundarybox_loading = QtWidgets.QHBoxLayout()
         self.horizontalLayout_boundarybox_loading.setObjectName("horizontalLayout_boundarybox_loading")
@@ -653,6 +658,7 @@ class Ui_MainWindow(object):
         self.lineEdit_patternMesh.setToolTip(_translate("MainWindow", "<html><head/><body><p>CUTE 2D mesh or Pattern Mesh (ptn)</p></body></html>"))
         self.lineEdit_patternMesh.setText(_translate("MainWindow", "Mesh 2D or Pattern"))
         self.push_searchMesh.setText(_translate("MainWindow", "Search"))
+        self.checkBox_searching_previousDirectory.setText(_translate("MainWindow", "Pre"))
         self.pushButton_QuickLoad.setText(_translate("MainWindow", "Quick Load (Not Calibrated)"))
         self.pushButton_GeneratngFoot.setText(_translate("MainWindow", "Load (Not Calibrated)"))
         self.filename.setText(_translate("MainWindow", "Connect FTP or Open a file"))

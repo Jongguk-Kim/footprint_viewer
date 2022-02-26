@@ -110,18 +110,26 @@ class Ui_Dialog(object):
                 self.home = '/home/users/fiper/ISLM/ISLM_JobFolder'
             else: 
                 self.home = '/home/users/'+self.user
-                
-            loaded = self.loadData(self.home)
+
+            if os.path.isfile('previous_path'): 
+                fp = open("previous_path", 'r')
+                cDir = fp.readline().strip()
+                fp.close()
+                # os.remove("previous_path")
+                self.home = cDir
+                loaded = False
+            else: 
+                loaded = self.loadData(self.home)
             
             if not loaded: 
-               
+                print (" home dir", self.home)
                 homedir = self.sftp.listdir(self.home)
                 self.searchedDirectories.append(self.home)
                 # print (' ADD :', self.searchedDirectories[-1])
                 homedir = sorted(homedir)
                 self.items =[]
                 cnt = 0 
-
+                
                 for name in homedir: 
                     if '.' != name[0] and '_' != name[0]:
                         cnt += 1 
@@ -157,29 +165,29 @@ class Ui_Dialog(object):
                                     self.items.append(QTreeWidgetItem(self.rootTree))
                                     self.items[-1].setText(self.nameColumn, name)
                                     self.items[-1].setText(self.rootColumn, self.home)
-                                    self.searchedFiles.append(self.home+"/"+fn)
+                                    self.searchedFiles.append(self.home+"/"+ex)
                                     break 
-                try: 
-                    fp = open("filename_path", 'r')
-                    cDir = fp.readline().strip()
-                    fp.close()
-                    print(cDir)
-                    preDirectory = self.checkHistory(self.home, cDir)
-                except: 
-                    preDirectory = False 
-                preDirectory = False
-                if preDirectory: 
-                    home = self.home.split("/")
-                    crnt = cDir.split("/")
-                    n = len(home)
-                    N = len(crnt)
-                    loopdirectory = self.home +"/"+ crnt[n]
-                    for m in range(n+1, N): 
-                        loopdirectory += "/"+crnt[m]
-                        print ("add dir: %s"%(loopdirectory))
-                        self.addItemsToTree(loopdirectory)
+                # try: 
+                #     fp = open("filename_path", 'r')
+                #     cDir = fp.readline().strip()
+                #     fp.close()
+                #     print(cDir)
+                #     preDirectory = self.checkHistory(self.home, cDir)
+                # except: 
+                #     preDirectory = False 
+                # preDirectory = False
+                # if preDirectory: 
+                #     home = self.home.split("/")
+                #     crnt = cDir.split("/")
+                #     n = len(home)
+                #     N = len(crnt)
+                #     loopdirectory = self.home +"/"+ crnt[n]
+                #     for m in range(n+1, N): 
+                #         loopdirectory += "/"+crnt[m]
+                #         print ("add dir: %s"%(loopdirectory))
+                #         self.addItemsToTree(loopdirectory)
 
-                        self.rootTree.itemExpanded
+                #         self.rootTree.itemExpanded
 
     def addItemsToTree(self, root): 
         homedir = self.sftp.listdir(root)
@@ -320,25 +328,32 @@ class Ui_Dialog(object):
             return items
     
     def doubleclicked_event(self, item  ): 
-            if item.text(self.nameColumn)[-1] !="/" : 
-                # print (item.text(self.rootColumn)+"/"+item.text(self.nameColumn))
-                fp=open('filename_path', 'w')
-                fp.write("%s\n"%(item.text(self.rootColumn)))
-                fp.write("%s\n"%(item.text(self.nameColumn)))
-                fp.close()
+        if item.text(self.nameColumn)[-1] !="/" : 
+            # print (item.text(self.rootColumn)+"/"+item.text(self.nameColumn))
+            fp=open('filename_path', 'w')
+            fp.write("%s\n"%(item.text(self.rootColumn)))
+            fp.write("%s\n"%(item.text(self.nameColumn)))
+            fp.close()
 
-                self.saveData()
-            
-                self.dialog.close()
+            self.saveData()
+
+            if not os.path.isfile('previous_path'): 
+                fp = open('previous_path', 'w')
+                fp.write("%s\n"%(item.text(self.rootColumn)))
+                fp.close()
             else: 
-                dname = item.text(self.rootColumn)+"/"+item.text(self.nameColumn)
-                if dname[-1] == "/": dname = dname[:-1]
-                for name in self.searchedDirectories:
-                    if dname == name: 
-                        # print (" Already exist", dname)
-                        break 
-                else: 
-                    self.makeTree(item.text(self.rootColumn)+"/"+item.text(self.nameColumn), item)
+                os.remove('previous_path')
+        
+            self.dialog.close()
+        else: 
+            dname = item.text(self.rootColumn)+"/"+item.text(self.nameColumn)
+            if dname[-1] == "/": dname = dname[:-1]
+            for name in self.searchedDirectories:
+                if dname == name: 
+                    # print (" Already exist", dname)
+                    break 
+            else: 
+                self.makeTree(item.text(self.rootColumn)+"/"+item.text(self.nameColumn), item)
 
     def saveData(self): 
         fp=open(self.savefile, 'w')
