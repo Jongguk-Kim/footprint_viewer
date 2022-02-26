@@ -218,6 +218,7 @@ class FOOTPRINT():
 
     def inputISLM_caliFPC(self, fname): 
         # print (" ISLM FPC Input")
+        
         with open(fname) as F: 
             lines = F.readlines()
         for line in lines: 
@@ -1435,7 +1436,89 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
 
    
 
-def Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3): 
+def Filtering_preFiler(pointsX, pointsY, mht=5e-3, image=False): 
+    if image: 
+        import matplotlib.pyplot as plt 
+        plt.clf()
+        plt.scatter(pointsX, pointsY, label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=10)
+
+    if pointsY[1] < 0: 
+        negative = True 
+        pointsY *= -1 
+    else: negative = False 
+    
+    multi = 3
+    gap = 3.0E-3
+
+    N = len(pointsX)
+    yMax = np.max(pointsY); yMin = np.min(pointsY)
+
+    mid = (yMax + yMin) / 2.0 
+    current = yMin
+    while current < mid: 
+        ix1 = np.where(pointsY>=current)[0]
+        ix2 = np.where(pointsY< current + gap) [0]
+        ix3 = np.where(pointsY< current + gap*2) [0]
+        ix = np.intersect1d(ix1, ix2) 
+        jx = np.intersect1d(ix1, ix3) 
+        if len(ix) ==1 or len(ix) * multi < len(jx) or current < yMin + gap   : 
+            j = 0 
+            while j < len(pointsX): 
+                if pointsY[j] < current + gap and pointsY[j] > current : 
+                    pointsX = np.delete(pointsX, j)
+                    pointsY = np.delete(pointsY, j)
+                    continue 
+                j += 1 
+        current += gap /2 
+
+
+    current = yMax
+    while current > mid+mid/3.0: 
+        ix1 = np.where(pointsY<=current)[0]
+        ix2 = np.where(pointsY > current - gap) [0]
+        ix3 = np.where(pointsY > current - gap*2) [0]
+        ix = np.intersect1d(ix1, ix2) 
+        jx = np.intersect1d(ix1, ix3) 
+        if len(ix) ==1 or len(ix) * multi < len(jx)  : 
+            j = 0 
+            while j < len(pointsX): 
+                if pointsY[j] > current - gap and pointsY[j] < current : 
+                    pointsX = np.delete(pointsX, j)
+                    pointsY = np.delete(pointsY, j)
+                    continue 
+                j += 1 
+
+        current -= gap /2 
+
+    if negative: 
+        pointsY *= -1 
+
+    print (" ")
+
+    if image: 
+        plt.scatter(pointsX, pointsY, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=25)
+        # print ("Final Fitting coefficient", A)
+        plt.legend(loc=4)
+        plt.xlim(-0.08, 0.08)
+        plt.ylim(0.0, 0.08)
+        plt.axis('equal')
+        import os 
+        if not os.path.isfile("fitting_dots.png"): 
+            plt.savefig("fitting_dots.png")
+        else: 
+            plt.savefig("fitting_dots1.png")
+        plt.clf()
+
+    return pointsX, pointsY 
+
+
+def Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3, image=False): 
+
+    pointsX, pointsY = Filtering_preFiler(pointsX, pointsY, mht=mht, image=image)
+
+    # if len(pointsX) < 10: 
+
+
     i= 2 
     mht = 5e-3
     while i < len(pointsX)-2: 
@@ -1469,7 +1552,6 @@ def Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3):
 
         i += 1 
     return pointsX, pointsY 
-
 
 def searchbounarypoints(px=[], py=[], pxy=[], pos="updown", dist=5.0E-3, ix=0, iy=1):
     try:
@@ -1717,16 +1799,44 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     WidthPositionNeg = Sorting(WidthPositionNeg)
     ###################################################
     print ("** Curving Fitting Up points")
-    pointsX, pointsY = Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3)
+    
+    orgptx = pointsX; orgpty = pointsY
+    pointsX, pointsY = Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3, image=True)
     A, err, err_value = curvefitting(pointsX, pointsY, order=ordern)
     ptx = pointsX
     pty = pointsY
     ermax = err.max()
 
+    # import matplotlib.pyplot as plt 
+    # plt.clf()
+    # plt.scatter(orgptx, orgpty, label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=10)
+    # plt.scatter(ptx, pty, label="filtered after fitting", edgecolors=None, linewidths=0.0, color='blue', s=5)
+    # s = np.min(px)
+    # widthmax = np.max(px)
+    # d = 0.01
+    # ptxi = []; ptyi=[]
+    # while s < widthmax: 
+    #     yt = 0.0
+    #     for i in range(ordern+1):
+    #         yt += A[i]*pow(s, float(i))
+    #     ptxi.append(s)
+    #     ptyi.append(yt)
+    #     s += d 
+    # plt.scatter(ptxi, ptyi, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=5)
+    # # print ("Final Fitting coefficient", A)
+    # plt.legend(loc=4)
+    # # plt.xlim(-0.1, 0.1)
+    # plt.savefig("fitting_dots.png")
+    # plt.clf()
+
+
+
     cnt = 0
     perr = 0.0
     # print (err_value)
     N = len(pty)
+    # print (" No of pooints - %d"%(N))
+    # print ("*******************************************")
     while abs(perr - err_value) > margin_gap:  
         
         if delete=='max': ermaxindx =  np.argmax(err)
@@ -1744,7 +1854,9 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
         if err_value / len(err) <  marginoferr: break
         if cnt > N/2: break
     print ("* Fitting Coefficient: ", A)
+    savefig = False  
     if savefig:
+        import matplotlib.pyplot as plt 
         plt.scatter(pointsX, pointsY, label="points for fitting", edgecolors=None, linewidths=0.0, color='blue')
         plt.scatter(ptx, pty, label="filtered after fitting", edgecolors=None, linewidths=0.0, color='black')
         s = np.min(px)

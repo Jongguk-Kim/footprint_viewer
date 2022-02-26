@@ -112,19 +112,20 @@ class Ui_Dialog(object):
                 self.home = '/home/users/'+self.user
                 
             loaded = self.loadData(self.home)
+            
             if not loaded: 
+               
                 homedir = self.sftp.listdir(self.home)
                 self.searchedDirectories.append(self.home)
                 # print (' ADD :', self.searchedDirectories[-1])
                 homedir = sorted(homedir)
                 self.items =[]
                 cnt = 0 
+
                 for name in homedir: 
                     if '.' != name[0] and '_' != name[0]:
                         cnt += 1 
-                        
                         results = self.searchDirectory(self.home+"/"+name)
-                    
                         if results:
                             self.items.append(QTreeWidgetItem(self.rootTree))
                             self.items[-1].setText(self.nameColumn, name+"/")
@@ -158,6 +159,81 @@ class Ui_Dialog(object):
                                     self.items[-1].setText(self.rootColumn, self.home)
                                     self.searchedFiles.append(self.home+"/"+fn)
                                     break 
+                try: 
+                    fp = open("filename_path", 'r')
+                    cDir = fp.readline().strip()
+                    fp.close()
+                    print(cDir)
+                    preDirectory = self.checkHistory(self.home, cDir)
+                except: 
+                    preDirectory = False 
+                preDirectory = False
+                if preDirectory: 
+                    home = self.home.split("/")
+                    crnt = cDir.split("/")
+                    n = len(home)
+                    N = len(crnt)
+                    loopdirectory = self.home +"/"+ crnt[n]
+                    for m in range(n+1, N): 
+                        loopdirectory += "/"+crnt[m]
+                        print ("add dir: %s"%(loopdirectory))
+                        self.addItemsToTree(loopdirectory)
+
+                        self.rootTree.itemExpanded
+
+    def addItemsToTree(self, root): 
+        homedir = self.sftp.listdir(root)
+        self.searchedDirectories.append(root)
+        # print (' ADD :', self.searchedDirectories[-1])
+        homedir = sorted(homedir)
+        self.items =[]
+        cnt = 0 
+
+        for name in homedir: 
+            if '.' != name[0] and '_' != name[0]:
+                cnt += 1 
+                results = self.searchDirectory(root+"/"+name)
+                print ("   %s"%(name))
+                if results:
+                    self.items.append(QTreeWidgetItem(self.rootTree))
+                    self.items[-1].setText(self.nameColumn, name+"/")
+                    self.items[-1].setText(self.rootColumn, root)
+                    dirs, files = results
+                    subs=[]
+                    if len(dirs): 
+                        self.searchedDirectories.append(root+"/"+name)
+                        print (' ADD DR:', self.searchedDirectories[-1])
+                    for dname in dirs: 
+                        subs.append(QTreeWidgetItem(self.items[-1]))
+                        subs[-1].setText(self.nameColumn, dname+"/")
+                        
+                        directory =  root+"/"+name
+                        if directory[-1] == '/': directory=directory[:-1]
+                        subs[-1].setText(self.rootColumn, directory)
+
+                    for fn in files: 
+                        for ex in self.extensions: 
+                            if ex in fn: 
+                                subs.append(QTreeWidgetItem(self.items[-1]))
+                                print (' ADD FL :', subs[-1])
+                                subs[-1].setText(self.nameColumn, fn)
+                                directory =  root+"/"+name
+                                if directory[-1] == '/': directory=directory[:-1]
+                                subs[-1].setText(self.rootColumn,directory)
+                                self.searchedFiles.append(directory+"/"+fn)
+                                break 
+
+
+    def checkHistory(self, orghome, directory):  
+        home = orghome.split("/")
+        current = directory.split("/")
+
+        N = len(home)
+        for i in range(N): 
+            if home[i] != current[i]: 
+                return orghome 
+        else: 
+            return True 
 
     def searchDirectory(self, home):
         files=[]
@@ -193,7 +269,7 @@ class Ui_Dialog(object):
                 # print (' ADD :', self.searchedDirectories[-1])
                 
             except Exception as EX: 
-                print (EX)
+                print (EX, homedir)
                 return 
             
             if homedir[-1] == '/': homedir = homedir[:-1]
@@ -243,28 +319,26 @@ class Ui_Dialog(object):
                         pass 
             return items
     
-    def doubleclicked_event(self, item): 
+    def doubleclicked_event(self, item  ): 
+            if item.text(self.nameColumn)[-1] !="/" : 
+                # print (item.text(self.rootColumn)+"/"+item.text(self.nameColumn))
+                fp=open('filename_path', 'w')
+                fp.write("%s\n"%(item.text(self.rootColumn)))
+                fp.write("%s\n"%(item.text(self.nameColumn)))
+                fp.close()
 
-        if item.text(self.nameColumn)[-1] !="/" : 
-            print (item.text(self.rootColumn)+"/"+item.text(self.nameColumn))
-            fp=open('filename_path', 'w')
-            fp.write("%s\n"%(item.text(self.rootColumn)))
-            fp.write("%s\n"%(item.text(self.nameColumn)))
-            fp.close()
-
-            self.saveData()
-           
-            self.dialog.close()
-        else: 
-            dname = item.text(self.rootColumn)+"/"+item.text(self.nameColumn)
-            if dname[-1] == "/": dname = dname[:-1]
+                self.saveData()
             
-            for name in self.searchedDirectories:
-                if dname == name: 
-                    # print (" Already exist", dname)
-                    break 
+                self.dialog.close()
             else: 
-                self.makeTree(item.text(self.rootColumn)+"/"+item.text(self.nameColumn), item)
+                dname = item.text(self.rootColumn)+"/"+item.text(self.nameColumn)
+                if dname[-1] == "/": dname = dname[:-1]
+                for name in self.searchedDirectories:
+                    if dname == name: 
+                        # print (" Already exist", dname)
+                        break 
+                else: 
+                    self.makeTree(item.text(self.rootColumn)+"/"+item.text(self.nameColumn), item)
 
     def saveData(self): 
         fp=open(self.savefile, 'w')
@@ -289,33 +363,11 @@ class Ui_Dialog(object):
         except: 
             print ("no lines")
             return False 
-        # dirs = []; files=[]
-        # for line in lines: 
-        #     if line.strip()[-1]=='&': 
-        #         line = line.strip()[:-1]
-        #         dirs.append(line.strip().split("/"))
-        #     else: 
-        #         files.append(line.strip().split("/"))
-        
-        # print (dirs[0])
-        # print(files[0])
-
-        # print (dirs[0]) : ['', 'home', 'users', 'h20200155']
-        # print(files[0]) : ['', 'home', 'users', 'h20200155', '2020', '3003763VT00008-0.inp']
 
         self.items =[]
-
-        # i = 1 
-        # while i < 1000: 
-
-        #     for dr, fl in zip(dirs, files): 
-        #         if len(dr) == i : 
-        #             self.items.append(QTreeWidgetItem(self.rootTree))
-
         return False  
 
 
-        pass 
     def connectFTP(self): 
         # host = '10.82.66.65'
         # pw = self.user = 'h20200155'

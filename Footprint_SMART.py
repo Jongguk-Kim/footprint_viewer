@@ -1226,8 +1226,8 @@ class Ui_MainWindow(object):
                 self.lineEdit_jobDir.setText("")
                 self.lineEdit_smartFile.setText("")
             
-            fp = open('filename_path', 'w')
-            fp.close()
+            # fp = open('filename_path', 'w')
+            # fp.close()
 
             
     def searchMESHFile(self): 
@@ -1735,6 +1735,8 @@ class Ui_MainWindow(object):
         self.loadImage(quick=False)
     def loadImage(self, quick=False):
         
+        if isfile("fitting_dots.png") : remove("fitting_dots.png")
+
         if self.connectionStatus: 
             if not self.ftp.get_transport(): 
                 self.connectionStatus = False 
@@ -2020,7 +2022,7 @@ class Ui_MainWindow(object):
             self.filename.setText( simulationID )
         else: 
             self.radio_calculation.setChecked(True)
-            jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.sfric0* *.dat, *.odb)")
+            jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.sfric0* *.dat *.odb)")
             if jobFile: 
                 self.cwd = getCWD(jobFile)
             else: 
@@ -2760,7 +2762,7 @@ class Ui_MainWindow(object):
             
 
     def readTestResultSCV(self): 
-        jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.csv *.png *.jpg)")
+        jobFile, _ = QtWidgets.QFileDialog.getOpenFileName(None, "Select File", self.cwd, "File Open(*.csv *.png *.jpg *.bmp)")
         if jobFile: 
             self.cwd = getCWD(jobFile)
             self.writeSetting()
@@ -2782,7 +2784,13 @@ class Ui_MainWindow(object):
                 self.indoorMax = self.lineEdit_max_colorRange.text()
             else: 
                 import matplotlib.image as mpimg
-                self.img = mpimg.imread(jobFile)
+                self.img = mpimg.imread(jobFile)  ################################################################################
+                ## matplotlib.image.imread() : Read an image from a file into an array
+                ## This function exists for historical reasons. It is recommended to use PIL.Image.open instead for loading images
+                ## import PIL 
+                ## img = PIL.Image.open(jobFile)
+                ## self.img = np.array(img)
+                ##################################################################################################################
                 if len(self.img)  > 2200: 
                     scale = len(self.img)   *2 * 0.8587 /  float(self.lineEdit_imageScale.text().strip())
                 else: 
@@ -2814,8 +2822,6 @@ class Ui_MainWindow(object):
             self.figure.showImage(self.img, imageScale=self.imageScale, imageName = self.ImageName)
             self.imageht = len(self.img) 
             self.imagewt = len(self.img[0])
-
-   
 
     def drawTestImage(self): 
         size = float(self.lineEdit_pointSize.text().strip())
@@ -3942,6 +3948,8 @@ def defaultTheme():
 if __name__ == "__main__":
     import sys
 
+    
+    
     app = QtWidgets.QApplication(sys.argv)
 
 
