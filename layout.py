@@ -25,9 +25,10 @@ class LAYOUT:
         self.edge_outer=[]
         try: 
             self.Mesh2DInformation(meshfile)
-        except: 
+        except Exception as EX: 
+            print(EX)
             print (" NOT MESH FILE!!")
-            
+
 
     def Mesh2DInformation(self, InpFileName):
         with open(InpFileName) as INP:
@@ -48,14 +49,15 @@ class LAYOUT:
                     if 'GROOVE DEPTH' in line : 
                         txt = line.split(":")[1].strip()
                         self.GD = float(txt)/1000.0
-            
-            elif '*' in line:
+                continue 
+            if '*' in line:
+                # print(line.strip())
                 word = list(line.split(','))
-                if 'HEADING' in word[0].upper(): 
+                if '*HEADING' in word[0].upper(): 
                     spt = 'HD'
-                elif 'NODE' in word[0].upper(): 
+                elif '*NODE' in word[0].upper(): 
                     spt = 'ND'
-                elif 'ELEMENT' in word[0].upper():
+                elif '*ELEMENT' in word[0].upper():
                     # EL = list(word[1].split('='))
                     # EL = EL[1].strip()
                     if 'MGAX' in line:
@@ -66,16 +68,16 @@ class LAYOUT:
                         spt = 'C4'
                     else:
                         spt = 'NN'
-                elif 'SURFACE' in word[0].upper(): 
+                elif '*SURFACE' in word[0].upper(): 
                     spt = 'SF'
                     name = word[2].split('=')[1].strip()
 
                     self.Surface.AddName(name)
                 #                    print ('Name=', name, 'was stored', Surface.Surface)
-                elif 'TIE' in word[0].upper(): 
+                elif '*TIE' in word[0].upper(): 
                     spt = 'TI'
                     name = word[1].split('=')[1].strip()
-                elif 'ELSET' in word[0].upper(): 
+                elif '*ELSET' in word[0].upper(): 
                     spt = 'ES'
                     name = word[1].split('=')[1].strip()
                     if name != "BETWEEN_BELTS" and name != "BD1" and name != "BetweenBelts":
@@ -634,6 +636,7 @@ def OuterEdge(FreeEdge, Node, Element):
     MinY = 9.9E20
     cNodes = [0]
     npn = np.array(Node.Node)
+    
     for i in range(N):
         ix = np.where(npn[:,0]==FreeEdge.Edge[i][0])[0][0]; N1 = Node.Node[ix]
         ix = np.where(npn[:,0]==FreeEdge.Edge[i][1])[0][0]; N2 = Node.Node[ix]
@@ -645,7 +648,14 @@ def OuterEdge(FreeEdge, Node, Element):
             MinY = N2[3]
             cNodes[0] = N2[0]
     if cNodes[0] == 0:
-        cNodes[0] = Node.NodeIDByCoordinate('z', 0.0, closest=1)
+        zMin = np.min(npn[:, 3])
+        ix = np.where(npn[:,3] == zMin)[0]
+
+        for x in ix: 
+            if npn[:,2] < 0: 
+                cNodes = npn[x]
+                break 
+        # cNodes[0] = Node.NodeIDByCoordinate('z', 0.0, closest=1)
 
     MAX = 10000   ## max iteration for searching  error
     ShareNodePos = []
@@ -797,6 +807,7 @@ def ElementShape(k, Elements):
 def readBodyLayout(meshfile=None): 
     # print ("Mesh file", meshfile)
     layout = LAYOUT(meshfile)
+    # print(layout.Node.Node)
     layout.OuterEdge()
 
     beltEdge =[]   # print ("EDGE : Node1, Node2, Elset_Name, FacdID, Element_No, D")

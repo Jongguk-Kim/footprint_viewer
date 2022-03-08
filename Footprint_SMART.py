@@ -19,6 +19,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import  Qt
 from PyQt5.QtGui import QPalette, QColor
 
+from PyQt5.QtWidgets import QMainWindow,QApplication, QTreeWidget, QTreeWidgetItem
+
 from os.path import isfile 
 from os import getcwd, remove, system, listdir
 import numpy as np 
@@ -120,7 +122,7 @@ class MyCheckBox(QtWidgets.QCheckBox):
 
 
 
-import tree_widget 
+# import tree_widget 
 
 def connectFTP(): 
     host = '10.82.66.65'
@@ -979,7 +981,7 @@ class Ui_MainWindow(object):
         except: 
             print ("## no version history file!!")
     
-    def initialze(self, MainWindow): 
+    def initialze(self, MainWindow, onScreen=True): 
         self.setTable()
         for i in range(self.rows): 
             self.tableWidget.setItem(i, 4, QtWidgets.QTableWidgetItem(self.lineEdit_pointSize.text()))
@@ -995,13 +997,17 @@ class Ui_MainWindow(object):
 
         self.lineEdit_jobFile.setText("")
 
-        self._stdout = StdoutRedirect()
-        self._stdout.start()
-        self._stdout.printOccur.connect(lambda x : self._append_text(x))
+        self.Dialog = None 
 
-        self._stdoutText = StdoutRedirectText()
-        self._stdoutText.start()
-        self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
+
+        if onScreen: 
+            self._stdout = StdoutRedirect()
+            self._stdout.start()
+            self._stdout.printOccur.connect(lambda x : self._append_text(x))
+
+            self._stdoutText = StdoutRedirectText()
+            self._stdoutText.start()
+            self._stdoutText.printOccur.connect(lambda x : self._append_textbrower(x))
 
     def actions(self): 
         self.radio_Single.clicked.connect(self.jobStatus)
@@ -1236,15 +1242,16 @@ class Ui_MainWindow(object):
     def searchSMARTFile(self): 
         # dlg = TREEWIDGET(extensions=['.inp'])
         if self.connectionStatus: 
-            Dialog = QtWidgets.QDialog()
-            dlg = tree_widget.Ui_Dialog()
-            extens=['.inp', '.odb']
+            if isinstance(self.Dialog, type(None)): 
+                self.Dialog = QtWidgets.QDialog()
+                self.dlg = Ui_Dialog() # tree_widget.Ui_Dialog()
 
-            if isfile(self.previous_path) : 
-                remove(self.previous_path)
+                if isfile(self.previous_path) : 
+                    remove(self.previous_path)
 
-            dlg.setupUi(Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
-            Dialog.exec_()
+            extens=['.inp', '.odb', '.sfric']
+            self.dlg.setupUi(self.Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
+            self.Dialog.exec_()
             try: 
                 with open('filename_path') as F: 
                     path = F.readlines()
@@ -1265,22 +1272,22 @@ class Ui_MainWindow(object):
             
     def searchMESHFile(self): 
         if self.connectionStatus: 
-            Dialog = QtWidgets.QDialog()
-            dlg = tree_widget.Ui_Dialog()
-            extens=['.inp', '.ptn']
-
+            if isinstance(self.Dialog, type(None)): 
+                self.Dialog = QtWidgets.QDialog()
+                self.dlg = Ui_Dialog() # tree_widget.Ui_Dialog()
             
             try: 
-                with open('filename_path') as F: 
-                    path = F.readlines()
-
                 if isfile(self.previous_path): 
                     self.checkBox_searching_previousDirectory.setChecked(True)
                 else: 
                     self.checkBox_searching_previousDirectory.setChecked(False)
-                
-                dlg.setupUi(Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
-                Dialog.exec_()
+
+                extens=['.inp', '.ptn']
+                self.dlg.setupUi(self.Dialog, sftp=[self.host, self.user, self.pw], extensions=extens)
+                self.Dialog.exec_()
+
+                with open('filename_path') as F: 
+                    path = F.readlines()
                 
                 self.lineEdit_patternMesh.setText(path[0].strip()+"/"+path[1].strip()+", surf=CONT, step=3, direction=x+")
             except: 
@@ -1566,6 +1573,7 @@ class Ui_MainWindow(object):
         self.jobStatus()
 
         if self.connectionStatus: 
+
             try: 
                 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 s.connect(("8.8.8.8", 80))
@@ -1597,18 +1605,6 @@ class Ui_MainWindow(object):
                             if i > 5000: break 
                             lines += wd 
 
-                    
-                    # for i, line in enumerate(lines): 
-                    #     wds = line.split(",")
-                    #     if wds[0].strip() == local_add and wds[3].strip().upper() == current_user.upper(): 
-                    #         cnt = int(wds[1].strip())+1 
-                    #         lines[i] = "%s,%d, %s, %s\n"%(wds[0].strip(), cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
-                    #         break 
-                    # else: 
-                    #     firstline= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
-                    #     lines[0]= firstline + lines[0] 
-
-
                     fp = open(locallog, 'w')
                     fp.writelines(lines)
                     fp.close()
@@ -1619,10 +1615,6 @@ class Ui_MainWindow(object):
                 except Exception as EX: 
                     print(EX)
                     lines= "%s,%d, %s, %s\n"%(local_add, cnt, str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())), self.lineEdit_hpc_ID.text() )
-                    
-
-               
-
                 
             except Exception as EX: 
                 print(EX, "Connection Error.") 
@@ -1773,18 +1765,20 @@ class Ui_MainWindow(object):
     def quickload(self):
         self.testImage = False
         if int(self.lineEdit_PointsDensity.text().strip()) > 50: 
-            self.lineEdit_PointsDensity.setText("15")
+            self.lineEdit_PointsDensity.setText("25")
           
         self.loadImage(quick=True)
     def reloadImage(self): 
         if int(self.lineEdit_PointsDensity.text().strip()) > 50 and isinstance(self.indoor, type(None)): 
-            self.lineEdit_PointsDensity.setText("15")
+            self.lineEdit_PointsDensity.setText("25")
+        try: 
+            self.loadImage(quick=False)
+        except Exception as EX: 
+            print(EX)
+            print ("## Fail to load image!! ")
 
-        self.loadImage(quick=False)
     def loadImage(self, quick=False):
         
-        if isfile("fitting_dots.png") : remove("fitting_dots.png")
-
         if self.connectionStatus: 
             if not self.ftp.get_transport(): 
                 self.connectionStatus = False 
@@ -2000,7 +1994,6 @@ class Ui_MainWindow(object):
     def loading(self, quickMode=False):
         self.comparings=[]
         self.removeLocalFiles()
-
         self.fn += 1 
         if self.fn >= self.FN: 
             self.fn -= self.FN 
@@ -2205,8 +2198,10 @@ class Ui_MainWindow(object):
             elif '.sfric' in  jobFile:
                 ptnmesh = None 
                 self.lineEdit_jobFile.setText(jobFile.split("/")[-1])
-                footprintName = jobFile.split("/")[-1]
-                if self.connectionStatus: 
+                
+                
+                if self.connectionStatus and isfile(self.localMesh): 
+                    footprintName = jobFile.split("/")[-1]
                     self.smart = makingFullFilePath_linux(workingDirectory, simulationID+".inp")
                     jobFile = self.localSfricResult
 
@@ -2216,6 +2211,7 @@ class Ui_MainWindow(object):
                     ptnmesh = self.localPtn
                     smart = self.localSMART
                     if isfile(mesh2d): 
+                        print(" LOAD 2D MESH")
                         try: 
                             outer, belt, bead, carcass = readBodyLayout(meshfile=mesh2d)
                         except: 
@@ -2225,11 +2221,12 @@ class Ui_MainWindow(object):
                 else: 
                     sfricResult = jobFile
                     sfricModel = jobFile[:-3]
-
+                    footprintName = self.lineEdit_smartFile.text().strip()
+                
                 if not isfile(self.localMesh) and self.connectionStatus: 
-                    axi = getAXI_filename_SMARTInput(self.localSMART)
-                    axi = makingFullFilePath_linux(workingDirectory, axi)
                     try: 
+                        axi = getAXI_filename_SMARTInput(self.localSMART)
+                        axi = makingFullFilePath_linux(workingDirectory, axi)
                         axifile = self.sftp.get(axi, self.localAxi)
                         _= LayoutMesh_From_axi(self.localAxi, output=self.localMesh)
                         outer, belt, bead, carcass = readBodyLayout(meshfile=self.localMesh)
@@ -2237,8 +2234,10 @@ class Ui_MainWindow(object):
                         self.filename.setText (" No found axi file.")
                         print (" No found axi file.")
                         self.filename.setText( "FILE ERROR" )
-                        self.fn -= 1
                         pass 
+                        
+                    sfricModel =  self.localSfric
+                    sfricResult = self.localSfricResult
 
                 sfric = SFRIC() #ResultSfric(model="", result="", sfric='', deformed=1, ht=8.0E-03, sfht=1.0E-03)
                 initNodes = ResultSfric(model=sfricModel, result=sfricResult,sfric=sfric, ht=0.8e-3, sfht=1.0e-3)
@@ -2441,7 +2440,7 @@ class Ui_MainWindow(object):
 
         # jobName =  jobFile.split("/")[-1]
         self.tableWidget.setItem(self.fn, 1, QtWidgets.QTableWidgetItem(footprintName))
-        
+
     def addBoundary_onTestFootprint(self): 
         self.addBoundaryOnTest()
 
@@ -2791,7 +2790,9 @@ class Ui_MainWindow(object):
                     scale = self.imagewt  *2 /  float(self.lineEdit_imageScale.text().strip())
                 scaled =[]; movedGrv=[]
                 if len(boundaries): 
-                    bndmax  = np.max(boundaries[0])
+                    for bn in boundaries: 
+                        if len(bn): bndmax  = np.max(bn)
+
                     if bndmax < 10.0: 
                         for bn in boundaries: 
                             b1 = bn[0] * scale 
@@ -3125,27 +3126,46 @@ class Ui_MainWindow(object):
                 return  False, False, False 
             
             smart =  self.lineEdit_smartFile.text().strip()
-            for name in dirList:
-                # print ("  ", name,"=?", smart)
-                # print( makingFullFilePath_linux(workingDirectory, name) )
+            if '.inp' in smart: 
+                for name in dirList:
+                    if smart == name:
+                        remoteSmart = makingFullFilePath_linux(workingDirectory, name)
+                        self.sftp.get(remoteSmart, self.localSMART)
+                        if checkSMART_File(self.localSMART): 
+                            simulationID = name[:-4] 
+                            break 
+                else: 
+                    self.filename.setText("The smart input was not found.")
+                    print ("The smart input was not found.")
+                    print (workingDirectory)
+                    return  False, False, False 
                 
-                if smart == name:
-                    remoteSmart = makingFullFilePath_linux(workingDirectory, name)
-                    
-                    self.sftp.get(remoteSmart, self.localSMART)
-                    if checkSMART_File(self.localSMART): 
-                        simulationID = name[:-4] 
-                        break 
-            else: 
-                self.filename.setText("The smart input was not found.")
-                print ("The smart input was not found.")
-                print (workingDirectory)
-                return  False, False, False 
+                jobFile = self.getRemoteFiles(workingDirectory, simulationID, manual=True)
+                print ( " files are copied.")
+                if isinstance(jobFile, type(None)): 
+                    self.filename.setText("No result file in the directory")
+                    return  False, False, False 
+            elif ".sfric" in smart: 
+                model = smart[:-3]
+                sfric = smart 
+                for name in dirList:
+                    if model == name: 
+                        remoteSfric = makingFullFilePath_linux(workingDirectory, name)
+                        self.sftp.get(remoteSfric, self.localSfric)
+                    if sfric == name: 
+                        remoteSfric = makingFullFilePath_linux(workingDirectory, name)
+                        self.sftp.get(remoteSfric, self.localSfricResult)
 
-            jobFile = self.getRemoteFiles(workingDirectory, simulationID, manual=True)
-            if isinstance(jobFile, type(None)): 
-                self.filename.setText("No result file in the directory")
-                return  False, False, False 
+                if isfile(self.localSfricResult) and isfile( self.localSfric): 
+                    return self.localSfricResult, model[:-6], workingDirectory 
+                else: 
+                    print("## Cannot load sfric files")
+                    return False, False, False 
+
+
+
+
+            
 
         else: 
             workingDirectory = '/home/users/fiper/ISLM/ISLM_JobFolder/'
@@ -4003,6 +4023,357 @@ def defaultTheme():
     palette = QPalette()
     app.setPalette(palette)
 
+class Ui_Dialog(object):
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+
+    def setupUi(self, Dialog, extensions=None, sftp=None):
+        self.extensions=extensions
+        if isinstance(self.extensions, type(None)): 
+            self.extensions=fextension
+        super().__init__()
+        # self.setGeometry(100, 100, 500, 600)
+        # self.setWindowTitle('Directory')
+
+        self.searchedDirectories=[]
+        self.searchedFiles=[]
+
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(642, 849)
+        self.gridLayout = QtWidgets.QGridLayout(Dialog)
+        self.gridLayout.setObjectName("gridLayout")
+        
+
+        self.retranslateUi(Dialog)
+        Dialog.finished['int'].connect(Dialog.close)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        self.savefile = 'searched_directory.sdt'
+
+        self.dialog = Dialog
+
+        head_item = QtWidgets.QTreeWidgetItem()
+        
+
+        self.file_return = False
+ 
+        head_item.setText(0, 'File Name')
+        head_item.setText(1, 'Full Path')
+        
+
+        self.rootTree = QTreeWidget()
+        self.rootTree.setHeaderItem(head_item)
+        self.rootTree.header().setVisible(True)
+        self.rootTree.setAlternatingRowColors(True)
+        self.rootTree.itemCollapsed.connect(self.collapsed_event)
+        self.rootTree.itemExpanded.connect(self.expanded_event)
+        self.rootTree.itemDoubleClicked.connect(self.doubleclicked_event)
+        
+
+        self.gridLayout.addWidget(self.rootTree, 0, 0, 1, 1)
+
+
+        self.rootColumn = 1
+        self.nameColumn = 0
+        self.rootTree.setColumnWidth(0, 500)
+
+
+        # self.setCentralWidget(self.rootTree)
+        
+        try: 
+            self.host, self.user, self.pw= sftp 
+        except: 
+            self.host='10.82.66.65'
+            self.pw =  self.user='h20200155'
+        
+        self.connection = self.connectFTP()
+
+        if self.connection: 
+            if self.user == 'fiper': 
+                self.home = '/home/users/fiper/ISLM/ISLM_JobFolder'
+            else: 
+                self.home = '/home/users/'+self.user
+
+            # if os.path.isfile('previous_path'): 
+            if isfile('previous_path'): 
+                fp = open("previous_path", 'r')
+                cDir = fp.readline().strip()
+                fp.close()
+                # os.remove("previous_path")
+                self.home = cDir
+                loaded = False
+            else: 
+                loaded = self.loadData(self.home)
+            
+            if not loaded: 
+                # print (" home dir", self.home)
+                homedir = self.sftp.listdir(self.home)
+                self.searchedDirectories.append(self.home)
+                # print (' ADD :', self.searchedDirectories[-1])
+                homedir = sorted(homedir)
+                self.items =[]
+                cnt = 0 
+                
+                for name in homedir: 
+                    if '.' != name[0] and '_' != name[0]:
+                        cnt += 1 
+                        results = self.searchDirectory(self.home+"/"+name)
+                        if results:
+                            self.items.append(QTreeWidgetItem(self.rootTree))
+                            self.items[-1].setText(self.nameColumn, name+"/")
+                            self.items[-1].setText(self.rootColumn, self.home)
+                            dirs, files = results
+                            subs=[]
+                            if len(dirs): 
+                                self.searchedDirectories.append(self.home+"/"+name)
+                                # print (' ADD :', self.searchedDirectories[-1])
+                            for dname in dirs: 
+                                subs.append(QTreeWidgetItem(self.items[-1]))
+                                subs[-1].setText(self.nameColumn, dname+"/")
+                                directory =  self.home+"/"+name
+                                if directory[-1] == '/': directory=directory[:-1]
+                                subs[-1].setText(self.rootColumn,directory)
+                            for fn in files: 
+                                for ex in self.extensions: 
+                                    if ex in fn: 
+                                        subs.append(QTreeWidgetItem(self.items[-1]))
+                                        subs[-1].setText(self.nameColumn, fn)
+                                        directory =  self.home+"/"+name
+                                        if directory[-1] == '/': directory=directory[:-1]
+                                        subs[-1].setText(self.rootColumn,directory)
+                                        self.searchedFiles.append(directory+"/"+fn)
+                                        break 
+                        else: 
+                            for ex in self.extensions: 
+                                if ex in name:
+                                    self.items.append(QTreeWidgetItem(self.rootTree))
+                                    self.items[-1].setText(self.nameColumn, name)
+                                    self.items[-1].setText(self.rootColumn, self.home)
+                                    self.searchedFiles.append(self.home+"/"+ex)
+                                    break 
+
+
+    def addItemsToTree(self, root): 
+        homedir = self.sftp.listdir(root)
+        self.searchedDirectories.append(root)
+        # print (' ADD :', self.searchedDirectories[-1])
+        homedir = sorted(homedir)
+        self.items =[]
+        cnt = 0 
+
+        for name in homedir: 
+            if '.' != name[0] and '_' != name[0]:
+                cnt += 1 
+                results = self.searchDirectory(root+"/"+name)
+                print ("   %s"%(name))
+                if results:
+                    self.items.append(QTreeWidgetItem(self.rootTree))
+                    self.items[-1].setText(self.nameColumn, name+"/")
+                    self.items[-1].setText(self.rootColumn, root)
+                    dirs, files = results
+                    subs=[]
+                    if len(dirs): 
+                        self.searchedDirectories.append(root+"/"+name)
+                        print (' ADD DR:', self.searchedDirectories[-1])
+                    for dname in dirs: 
+                        subs.append(QTreeWidgetItem(self.items[-1]))
+                        subs[-1].setText(self.nameColumn, dname+"/")
+                        
+                        directory =  root+"/"+name
+                        if directory[-1] == '/': directory=directory[:-1]
+                        subs[-1].setText(self.rootColumn, directory)
+
+                    for fn in files: 
+                        for ex in self.extensions: 
+                            if ex in fn: 
+                                subs.append(QTreeWidgetItem(self.items[-1]))
+                                print (' ADD FL :', subs[-1])
+                                subs[-1].setText(self.nameColumn, fn)
+                                directory =  root+"/"+name
+                                if directory[-1] == '/': directory=directory[:-1]
+                                subs[-1].setText(self.rootColumn,directory)
+                                self.searchedFiles.append(directory+"/"+fn)
+                                break 
+
+
+    def checkHistory(self, orghome, directory):  
+        home = orghome.split("/")
+        current = directory.split("/")
+
+        N = len(home)
+        for i in range(N): 
+            if home[i] != current[i]: 
+                return orghome 
+        else: 
+            return True 
+
+    def searchDirectory(self, home):
+        files=[]
+        dirs=[]
+        try: 
+            current = self.sftp.listdir(home)
+        except : 
+            # print ("FILE: %s"%(home+"/"+name))
+            return False
+        current = sorted(current)
+        for sb in current : 
+            try: 
+                _ = self.sftp.listdir(home+"/"+sb)
+                dirs.append(sb)
+            except: 
+                files.append(sb)
+
+        return [dirs, files]
+
+
+    def makeTree(self, homedir, rootTree): 
+        # print (" > Searching : %s"%(homedir))
+        
+        for sdir in self.searchedDirectories: 
+            if sdir == homedir: 
+                return rootTree
+        else: 
+        
+            try: 
+                homes = self.sftp.listdir(homedir)
+                if homedir[-1] == '/': homedir = homedir[:-1]
+                self.searchedDirectories.append(homedir)
+                # print (' ADD :', self.searchedDirectories[-1])
+                
+            except Exception as EX: 
+                print (EX, homedir)
+                return 
+            
+            if homedir[-1] == '/': homedir = homedir[:-1]
+            # print("###############################################")
+            # print ("SEARCHING DIR :", homedir)
+            
+            homes = sorted(homes)
+            items =[]
+            for name in homes:
+                # if '.' != name[0] and '_' != name[0]:
+                    results = self.searchDirectory(homedir+"/"+name)
+                    
+                    if results:
+                        items.append(QTreeWidgetItem(rootTree))
+                        items[-1].setText(self.nameColumn, name+"/")
+                        items[-1].setText(self.rootColumn, homedir)
+                        dirs, files = results
+                        subs=[]
+                        for dname in dirs: 
+                            # print ('dname', dname)
+                            if sdir in self.searchedDirectories: 
+                                if sdir == homedir+"/"+dname: 
+                                    # print (homedir+"/"+dname, ' is exists (directory)')
+                                    break 
+                            else: 
+                                subs.append(QTreeWidgetItem(items[-1]))
+                                subs[-1].setText(self.nameColumn, dname+"/")
+                                directory =  homedir+"/"+name
+                                if directory[-1] == '/': directory=directory[:-1]
+                                subs[-1].setText(self.rootColumn, directory)
+                                # print ("  Add dir item", dname)
+                                # subItems = self.makeTree(homedir+"/"+name +"/"+ dir, subs[-1])
+                        for fn in files: 
+                            for ex in self.extensions: 
+                                if ex in fn:
+                                    for sf in self.searchedFiles: 
+                                        if sf == homedir+"/"+name+"/"+fn: 
+                                            # print (homedir+"/"+name+"/"+fn, ' is exists (file)')
+                                            break 
+                                    else:
+                                        subs.append(QTreeWidgetItem(items[-1]))
+                                        subs[-1].setText(self.nameColumn, fn)
+                                        subs[-1].setText(self.rootColumn, homedir+"/"+name)
+                                        # print('Add File', fn)
+                                        break 
+                    else: 
+                        pass 
+            return items
+    
+    def doubleclicked_event(self, item  ): 
+        if item.text(self.nameColumn)[-1] !="/" : 
+            # print (item.text(self.rootColumn)+"/"+item.text(self.nameColumn))
+            fp=open('filename_path', 'w')
+            fp.write("%s\n"%(item.text(self.rootColumn)))
+            fp.write("%s\n"%(item.text(self.nameColumn)))
+            fp.close()
+
+            self.saveData()
+
+            # if not os.path.isfile('previous_path'): 
+            if not isfile('previous_path'): 
+                fp = open('previous_path', 'w')
+                fp.write("%s\n"%(item.text(self.rootColumn)))
+                fp.close()
+            else: 
+                remove('previous_path')
+        
+            self.dialog.close()
+        else: 
+            dname = item.text(self.rootColumn)+"/"+item.text(self.nameColumn)
+            if dname[-1] == "/": dname = dname[:-1]
+            for name in self.searchedDirectories:
+                if dname == name: 
+                    # print (" Already exist", dname)
+                    break 
+            else: 
+                self.makeTree(item.text(self.rootColumn)+"/"+item.text(self.nameColumn), item)
+
+    def saveData(self): 
+        fp=open(self.savefile, 'w')
+        for fn in self.searchedDirectories: 
+            fp.write("%s&\n"%fn)
+        for fn in self.searchedFiles: 
+            fp.write("%s\n"%fn)
+        fp.close()
+
+    def loadData(self, homedir): 
+        print('start loading')
+        # if not os.path.isfile(self.savefile):
+        if not isfile(self.savefile) : 
+            print ("no file")
+            return False 
+            
+        with open(self.savefile) as F: 
+            lines = F.readlines()
+        try :
+            if homedir != lines[0].strip()[:-1]: 
+                print("different directory")
+                return False 
+        except: 
+            print ("no lines")
+            return False 
+
+        self.items =[]
+        return False  
+
+
+    def connectFTP(self): 
+        # host = '10.82.66.65'
+        # pw = self.user = 'h20200155'
+
+        import paramiko as FTP 
+        self.ftp = FTP.SSHClient()
+        self.ftp.set_missing_host_key_policy(FTP.AutoAddPolicy())
+        try: 
+            port = 22 
+            self.ftp.connect(self.host, username=self.user, password=self.pw, port=port, timeout=3)
+            self.sftp = self.ftp.open_sftp()
+            return True 
+        except Exception as EX:
+            print (EX)
+            return False 
+
+    def collapsed_event(self, item):
+        # print('collapsed_event : ', item.text(0))
+        pass 
+    def expanded_event(self, item):
+        # print('expanded_event : ', item.text(0))
+        pass 
+
+
 if __name__ == "__main__":
     import sys
 
@@ -4014,7 +4385,7 @@ if __name__ == "__main__":
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
-    ui.initialze(MainWindow)
+    ui.initialze(MainWindow, onScreen=True)
     # MainWindow.showMaximized()
     MainWindow.show()
 

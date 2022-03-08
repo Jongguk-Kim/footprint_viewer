@@ -941,7 +941,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
 
     fittingmargin = 0.001 
     fittingmargin_gap=fittingmargin/100.0
-    point_gap = 3.0e-3
+    point_gap = 3.01e-3
     
     fpcX, fpcY, fpcV = Cropping_footprint_dots(ptx=px, pty=py, ptv=pv, xrange=[xMinCnt*1.2, xMaxCnt*1.2])
     if comparing: return fpcX, fpcY
@@ -1436,11 +1436,9 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
 
    
 
-def Filtering_preFiler(pointsX, pointsY, mht=5e-3, image=False): 
-    if image: 
-        import matplotlib.pyplot as plt 
-        plt.clf()
-        plt.scatter(pointsX, pointsY, label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=10)
+def Filtering_preFilter(pointsX, pointsY, mht=5e-3, image=False): 
+    
+    initX = pointsX; initY = pointsY
 
     if pointsY[1] < 0: 
         negative = True 
@@ -1469,7 +1467,7 @@ def Filtering_preFiler(pointsX, pointsY, mht=5e-3, image=False):
                     pointsY = np.delete(pointsY, j)
                     continue 
                 j += 1 
-        current += gap /2 
+        current += gap  
 
 
     current = yMax
@@ -1488,36 +1486,33 @@ def Filtering_preFiler(pointsX, pointsY, mht=5e-3, image=False):
                     continue 
                 j += 1 
 
-        current -= gap /2 
+        current -= gap  
 
     if negative: 
         pointsY *= -1 
 
-    print (" ")
+    # print (" ")
 
-    if image: 
-        plt.scatter(pointsX, pointsY, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=25)
+    if True: 
+        if negative: imageName  = "fitting_dots-prefilter_N%d.png"%(len(initX))
+        else: imageName= "fitting_dots-prefilter_Ps%d.png"%(len(initX))
+        import matplotlib.pyplot as plt 
+        plt.clf()
+        plt.scatter(initX, initY, label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=30)
+        plt.scatter(pointsX, pointsY, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=15)
         # print ("Final Fitting coefficient", A)
         plt.legend(loc=4)
         plt.xlim(-0.08, 0.08)
         plt.ylim(0.0, 0.08)
         plt.axis('equal')
-        import os 
-        if not os.path.isfile("fitting_dots.png"): 
-            plt.savefig("fitting_dots.png")
-        else: 
-            plt.savefig("fitting_dots1.png")
+        plt.savefig(imageName)
         plt.clf()
 
     return pointsX, pointsY 
 
 
 def Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3, image=False): 
-
-    pointsX, pointsY = Filtering_preFiler(pointsX, pointsY, mht=mht, image=image)
-
-    # if len(pointsX) < 10: 
-
+    # pointsX, pointsY = Filtering_preFilter(pointsX, pointsY, mht=mht, image=image)
 
     i= 2 
     mht = 5e-3
@@ -1576,7 +1571,7 @@ def searchbounarypoints(px=[], py=[], pxy=[], pos="updown", dist=5.0E-3, ix=0, i
     vmin = px.min()
     len = abs(vmax-vmin)
 
-    pN = px.size
+    # pN = px.size
 
     N = int(len/dist)+1
     
@@ -1603,6 +1598,7 @@ def searchbounarypoints(px=[], py=[], pxy=[], pos="updown", dist=5.0E-3, ix=0, i
         position += dist 
 
     return HighValulePoint, LowValuePoint, N
+
 
 def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     coef=False, savefig=False, delete='max', nofitting=False ): 
@@ -1797,52 +1793,37 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     ordern = fitting
     WidthPositionPos = Sorting(WidthPositionPos)
     WidthPositionNeg = Sorting(WidthPositionNeg)
+
     ###################################################
     print ("** Curving Fitting Up points")
     
     orgptx = pointsX; orgpty = pointsY
-    pointsX, pointsY = Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3, image=True)
+    pointsX, pointsY = Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3, image=False)
     A, err, err_value = curvefitting(pointsX, pointsY, order=ordern)
+
+    # print("err", err)
+    # print("max", err_value)
     ptx = pointsX
     pty = pointsY
     ermax = err.max()
 
-    # import matplotlib.pyplot as plt 
-    # plt.clf()
-    # plt.scatter(orgptx, orgpty, label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=10)
-    # plt.scatter(ptx, pty, label="filtered after fitting", edgecolors=None, linewidths=0.0, color='blue', s=5)
-    # s = np.min(px)
-    # widthmax = np.max(px)
-    # d = 0.01
-    # ptxi = []; ptyi=[]
-    # while s < widthmax: 
-    #     yt = 0.0
-    #     for i in range(ordern+1):
-    #         yt += A[i]*pow(s, float(i))
-    #     ptxi.append(s)
-    #     ptyi.append(yt)
-    #     s += d 
-    # plt.scatter(ptxi, ptyi, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=5)
-    # # print ("Final Fitting coefficient", A)
-    # plt.legend(loc=4)
-    # # plt.xlim(-0.1, 0.1)
-    # plt.savefig("fitting_dots.png")
-    # plt.clf()
-
-
-
     cnt = 0
     perr = 0.0
-    # print (err_value)
+   
     N = len(pty)
+    
     # print (" No of pooints - %d"%(N))
+    # print(" Margin Gap", margin_gap)
     # print ("*******************************************")
+    delpx =[]; delpy=[]
+    # erM = 0.01 
     while abs(perr - err_value) > margin_gap:  
         
         if delete=='max': ermaxindx =  np.argmax(err)
         else: ermaxindx =  np.argmin(err)
+        delpx.append(ptx[ermaxindx]); delpy.append(pty[ermaxindx])
         tx = np.delete(ptx, ermaxindx)
-        ty = np.delete(pty, ermaxindx )
+        ty = np.delete(pty, ermaxindx)
 
         perr = err_value
         A, err, err_value = curvefitting(tx, ty, order=ordern)
@@ -1850,34 +1831,72 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
         pty = ty
         cnt += 1
         
+        # if  np.max(err) > erM or np.min(err) < -erM: continue 
+
         if err_value > perr: break
         if err_value / len(err) <  marginoferr: break
         if cnt > N/2: break
+
+    ## verification 
+    nd =[]
+    for x, y in zip(delpx, delpy): 
+        nd.append([x, y])
+
+    nd = sorted(nd, key=lambda x: x[0])
+    cn = len(delpx)
+    g = 3.01e-3; gy=2.0e-3
+    cnt = 0 
+    for i, n in enumerate(nd): 
+        if i <= 1 or i >= cn -2: continue 
+        dxp = nd[i-1][0]; dyp = nd[i-1][1]
+        dx0 = nd[i  ][0]; dy0 = nd[i  ][1]
+        dxn = nd[i+1][0]; dyn = nd[i+1][1]
+        if abs(dx0-dxp) <= g and abs(dx0-dxn) <= g and abs(dy0-dyp) < gy and abs(dy0-dyn) < gy: 
+            ptx = np.append(ptx, dx0)
+            pty = np.append(pty, dy0)
+            cnt += 1 
+    if cnt : 
+        A, err, err_value = curvefitting(ptx, pty, order=ordern)
+
+
     print ("* Fitting Coefficient: ", A)
-    savefig = False  
+    # if not isfile("fitting_dots.png"): savefig = True  
+    # else: savefig = False 
+    savefig  = False    
     if savefig:
+        
         import matplotlib.pyplot as plt 
-        plt.scatter(pointsX, pointsY, label="points for fitting", edgecolors=None, linewidths=0.0, color='blue')
-        plt.scatter(ptx, pty, label="filtered after fitting", edgecolors=None, linewidths=0.0, color='black')
-        s = np.min(px)
-        widthmax = np.max(px)
-        d = 0.01
-        ptx = []; pty=[]
-        while s < widthmax: 
-            yt = 0.0
-            for i in range(ordern+1):
-                yt += A[i]*pow(s, float(i))
-            ptx.append(s)
-            pty.append(yt)
-            s += d 
-        plt.scatter(ptx, pty, label="Fitted points", edgecolors=None, linewidths=0.0, color='red')
+        plt.clf()
+        plt.scatter( p1[:, 0],  p1[:, 1], label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=50)
+        plt.scatter(pointsX, pointsY, label="after filtered", edgecolors=None, linewidths=0.0, color='blue', s=20)
+        plt.scatter(delpx, delpy, label="deleted points", edgecolors=None, linewidths=0.0, color='white', s=10)
+        
+        plt.scatter(ptx, pty, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=5)
+
+        pitting_points =  True  
+        if pitting_points: 
+            s = np.min(px)
+            widthmax = np.max(px)
+            d = 0.01
+            ptx = []; pty=[]
+            while s < widthmax: 
+                yt = 0.0
+                for i in range(ordern+1):
+                    yt += A[i]*pow(s, float(i))
+                ptx.append(s)
+                pty.append(yt)
+                s += d 
+
+            plt.plot(ptx, pty, label="calculated points",  color='red', lw=1)
+
         # print ("Final Fitting coefficient", A)
         plt.legend(loc=4)
         plt.xlim(-0.3, 0.3)
-        plt.savefig("fitting_dots.png")
+        plt.axis('equal')
+        plt.savefig("fitting_dots%d.png"%(len(p1)))
         plt.clf()
     # print (f"Up - Fitting Error {round(err_value, 6)} (iter-{cnt-1}, {len(ptx)})") 
-    print (" Up - Fitting Error %.6f, (iteration %d, %d)"%(err_value, cnt-1, len(ptx)))
+    print (" Up - Fitting Error %.6f, (iteration %d, current points=%d)"%(err_value, cnt-1, len(ptx)))
     # print (" Coefficients")
     # print (A)
     if coef: 
@@ -1908,6 +1927,7 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     p2 = np.array(LengthPointDown)
     pointsX = p2[:, 0]
     pointsY = p2[:, 1]
+    orgptx = pointsX; orgpty = pointsY
     pointsX, pointsY = Filtering_Up_Down_points(pointsX, pointsY, mht=5e-3)
     
     A, err, err_value = curvefitting(pointsX, pointsY, order=ordern)
@@ -1916,14 +1936,15 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
     ermax = err.min()
 
     cnt = 0
-    perr = 0.0
+    perr = 0
     N = len(pty)
+    delpx =[]; delpy=[]
     while abs(perr - err_value) > margin_gap:  
         tx = ptx
         ty = pty 
         if delete=='max': erminindx =  np.argmin(err)
         else: erminindx =  np.argmax(err)
-        
+        delpx.append(tx[erminindx]); delpy.append(ty[erminindx])
         tx = np.delete(tx, erminindx)
         ty = np.delete(ty, erminindx)
 
@@ -1936,18 +1957,67 @@ def SearchPoints(px=[], py=[], dist=5.0E-03, fitting=6, fittingmargin=0.001, \
         if err_value > perr: break
         if err_value / len(err) <  marginoferr: break
         if cnt > N/2: break
+
+     ## verification 
+    nd =[]
+    for x, y in zip(delpx, delpy): 
+        nd.append([x, y])
+
+    nd = sorted(nd, key=lambda x: x[0])
+    cn = len(delpx)
+    g = 3.01e-3; gy = 2.0e-3
+    cnt = 0 
+    for i, n in enumerate(nd): 
+        if i <= 1 or i >= cn -2: continue 
+        dxp = nd[i-1][0]; dyp = nd[i-1][1]
+        dx0 = nd[i  ][0]; dy0 = nd[i  ][1]
+        dxn = nd[i+1][0]; dyn = nd[i+1][1]
+        if abs(dx0-dxp) <= g and abs(dx0-dxn) <= g and abs(dy0-dyp) < gy and abs(dy0-dyn) < gy: 
+            ptx = np.append(ptx, dx0)
+            pty = np.append(pty, dy0)
+            cnt += 1 
+    if cnt : 
+        A, err, err_value = curvefitting(ptx, pty, order=ordern)
+
+
     # print (f"Down - Fitting Error {round(err_value, 6)} (iter-{cnt-1}, {len(ptx)})") 
     print ("* Fitting Coefficient: ", A)
     print (" Down - Fitting Error %.6f, (iteration %d, %d)"%(err_value, cnt-1, len(ptx)))  
+    # print(" ERR VALUE", err_value, delpx[-1], delpy[-1])
     # print (" Coefficients")
+    # if not isfile("fitting_dots_down.png"): savefig = True  
+    # else: savefig = False 
+    
+    if savefig:
+        
+        import matplotlib.pyplot as plt 
+        plt.clf()
+        plt.scatter( p2[:, 0],  p2[:, 1], label="points for fitting", edgecolors=None, linewidths=0.0, color='black', s=50)
+        plt.scatter(pointsX, pointsY, label="after filtered", edgecolors=None, linewidths=0.0, color='blue', s=20)
+        plt.scatter(delpx, delpy, label="deleted points", edgecolors=None, linewidths=0.0, color='white', s=10)
+        
+        plt.scatter(ptx, pty, label="Fitted points", edgecolors=None, linewidths=0.0, color='red', s=5)
+        pitting_points =  True  
+        if pitting_points: 
+            s = np.min(px)
+            widthmax = np.max(px)
+            d = 0.01
+            ptx = []; pty=[]
+            while s < widthmax: 
+                yt = 0.0
+                for i in range(ordern+1):
+                    yt += A[i]*pow(s, float(i))
+                ptx.append(s)
+                pty.append(yt)
+                s += d 
 
-    # plt.scatter(ptx, pty) 
-    # plt.axis('equal')
-    # if not isfile("points.png"): 
-    #     plt.savefig("points.png")
-    # else: 
-    #     plt.savefig("points01.png")
-    # plt.clf()
+            plt.plot(ptx, pty, label="calculated points",  color='red', lw=1)
+        # print ("Final Fitting coefficient", A)
+        plt.legend(loc=4)
+        plt.xlim(-0.3, 0.3)
+        plt.axis('equal')
+        plt.savefig("fitting_dots_down%d.png"%(len(p2)))
+        plt.clf()
 
 
     # print (A)
@@ -2012,9 +2082,12 @@ def curvefitting(nx=[], ny=[], order=1):
             y += A[j] * pow(nx[i], float(j))
         evalue += abs(ny[i]-y)
         err.append(-ny[i]+y)
-    if type(evalue) == np.ndarray : 
-        evalue = evalue.max()
-    return A, np.array(err), evalue
+        
+    err = np.array(err)
+
+    return A, err, evalue 
+
+
 
 def extract_profile_crown(fname): 
 

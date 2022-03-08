@@ -122,7 +122,7 @@ class Ui_Dialog(object):
                 loaded = self.loadData(self.home)
             
             if not loaded: 
-                print (" home dir", self.home)
+                # print (" home dir", self.home)
                 homedir = self.sftp.listdir(self.home)
                 self.searchedDirectories.append(self.home)
                 # print (' ADD :', self.searchedDirectories[-1])
