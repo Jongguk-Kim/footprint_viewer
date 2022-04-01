@@ -1198,25 +1198,23 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     downnode = NODE()
     cnt =1
     for nd in PointsDown:
-        # print ("%.2f < %.2f < %.2f"%((maxes[1] + maxwidth * 0.06)*1000, nd[0]*1000, ( maxes[0] - maxwidth * 0.06)*1000))
-        # if nd[0] >  maxes[1] + maxwidth * updown_points_Calculation_margin and nd[0] <  maxes[0] - maxwidth * updown_points_Calculation_margin:
-            downnode.Add([cnt, 0.0, nd[0], nd[1]])
-            cnt+=1
+        # print("%8.3f, %8.3f"%(nd[0]*1000, nd[1]*1000))
+        downnode.Add([cnt, 0.0, nd[0], nd[1]])
+        cnt+=1
     downnode.Sort(item=2, reverse=False)
 
     upnode = NODE()
     for nd in PointsUp:
-        # if nd[0] >  maxes[1] + maxwidth * updown_points_Calculation_margin and nd[0] <  maxes[0] - maxwidth * updown_points_Calculation_margin:
-            upnode.Add([cnt, 0.0, nd[0], nd[1]])
-            cnt+=1
+        # print("%8.3f, %8.3f"%(nd[0]*1000, nd[1]*1000))
+        upnode.Add([cnt, 0.0, nd[0], nd[1]])
+        cnt+=1
     upnode.Sort(item=2, reverse=True)
-
-    
 
 
     posnode = NODE()
     cnt = 0 
     for pn in posPositions:
+        # print("%8.3f, %8.3f"%(pn[0]*1000, pn[1]*1000))
         posnode.Add([cnt, 0.0, pn[0], pn[1]])
         cnt+=1
 
@@ -1225,6 +1223,7 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     negnodeDown = NODE()
     cnt = 100 
     for pn in negPositions:
+        # print("%8.3f, %8.3f"%(pn[0]*1000, pn[1]*1000))
         if pn[1]>0: 
             negnodeUp.Add([cnt, 0.0, pn[0], pn[1]])
         else: 
@@ -1245,7 +1244,8 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     areanode.Combine(negnodeDown)
     areanode.Node = Delete_Close_Points(areanode.Node, point_gap, backward=True )
 
-    # npx=[]; npy=[]
+    # for nd in areanode.Node: 
+    #     print("%8.3f, %8.3f"%(nd[2]*1000, nd[3]*1000))
 
     i = 1 
     PL=0 
@@ -1275,7 +1275,8 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     deletedx=[]; deletedy=[]
     unsortedNode=[]
     
-    i = 1
+    pvAngleGap = 0 
+    i = 1; countContinue = 0 
     while i < len(upx): 
         cangle = Angle_Between_Vectors([0, 0, 1, 0], [0, 0, upx[i], upy[i]])
         
@@ -1291,35 +1292,39 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
             if cangle <pangle or abs(cangle - pangle) > 0.25  : 
                 # print("%.3f, %.3f"%( upx[i], upy[i]))
                 # print ("** Angle %.2f, pangle=%.2f"%(math.degrees(cangle), math.degrees(pangle)) )
-                deletedx.append(upx[i]); deletedy.append(upy[i])
-                upx = np.delete(upx, i)
-                upy = np.delete(upy, i)
-                # print ("             deleted")
-                continue
+                countContinue += 1
+                if (countContinue > 1 and pvAngleGap > abs(cangle - pangle)) or countContinue ==1: 
+                    deletedx.append(upx[i]); deletedy.append(upy[i])
+                    upx = np.delete(upx, i)
+                    upy = np.delete(upy, i)
+                    pvAngleGap = abs(cangle - pangle)
+                    continue
         unsortedNode.append([cangle, upx[i], upy[i]])
         pangle = cangle  
-        
-
         i += 1 
 
     print(" math degrees ", math.degrees(0.25))
+
+    radian30degree = math.radians(30.0); radian150degree = math.radians(150.0) 
     # print ("************************* ")
-    i = 1
+    i = 1; countContinue = 0 
     while i < len(dwx): 
         cangle = Angle_Between_Vectors([0, 0, -1, 0], [0, 0, dwx[i], dwy[i]])
         # print ("* Angle %.2f"%(math.degrees(cangle)))
         if i > 2: 
-            if math.degrees(cangle) < 30.0 and math.degrees(pangle) > 150: 
+            if cangle < radian30degree and pangle > radian150degree: 
                 pangle = 0 
             if cangle < pangle or abs(cangle - pangle) > 0.25: 
-                deletedx.append(dwx[i]); deletedy.append(dwy[i])
-                dwx = np.delete(dwx, i)
-                dwy = np.delete(dwy, i)
-                # print ("             deleted")
-                continue
+                countContinue += 1
+                if (countContinue > 1 and pvAngleGap > abs(cangle - pangle)) or countContinue ==1: 
+                    deletedx.append(dwx[i]); deletedy.append(dwy[i])
+                    dwx = np.delete(dwx, i)
+                    dwy = np.delete(dwy, i)
+                    pvAngleGap = abs(cangle - pangle)
+                    continue
         pangle = cangle  
         unsortedNode.append([cangle+math.pi, dwx[i], dwy[i]])
-
+        countContinue += 1 
         i += 1 
 
     sortedNode = Sorting(unsortedNode)
@@ -1327,10 +1332,12 @@ def FPC(px, py, pv, cp=None, savefile="", displim=0.15, fitting=6,\
     nlist = []
     totalareapointx=[]
     totalareapointy=[]
+    # print(" Contact Area Node")
     for n in sortedNode: 
         # print (" Angle %f"%(n[0]))
         totalareapointx.append(n[1])
         totalareapointy.append(n[2])
+        # print("%8.3f, %8.3f"%(n[1]*1000, n[2]*1000))
 
     totalarea = Area(totalareapointx, totalareapointy)
     print ("** Total Area = %.2f"%(totalarea*10000))
